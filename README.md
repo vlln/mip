@@ -105,7 +105,7 @@ Example:
 prefer:
   - company-cache
 exclude:
-  - docker.m.daocloud.io
+  - dockerproxy.cool
 registries:
   docker.io:
     mirrors:

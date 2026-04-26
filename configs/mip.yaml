@@ -5,25 +5,13 @@ registries:
       - registry-1.docker.io
     default_namespace: library
     mirrors:
-      - docker.m.daocloud.io
-      - m.daocloud.io/docker.io
-      - docker.1ms.run
-      - docker.1panel.live
-      - docker.m.ixdev.cn
-      - hub.rat.dev
-      - docker.xuanyuan.me
-      - docker-registry.nmqu.com
-      - hub.amingg.com
-      - docker.amingg.com
-      - docker.hlmirror.com
-      - hub1.nat.tf
-      - hub2.nat.tf
-      - hub3.nat.tf
+      - dockerproxy.cool
       - docker.kejilion.pro
       - hub.1panel.dev
-      - dockerproxy.cool
+      - m.daocloud.io/docker.io
+      - docker.1ms.run
+      - docker.xuanyuan.me
       - docker.apiba.cn
-      - proxy.vvvv.ee
   ghcr.io:
     mirrors:
       - ghcr.m.daocloud.io

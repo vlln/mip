@@ -11,9 +11,9 @@ aliases:
   - registry-1.docker.io
 default_namespace: library
 mirrors:
-  - docker.m.daocloud.io
+  - dockerproxy.cool
   - m.daocloud.io/docker.io
-  - docker.1panel.live
+  - docker.1ms.run
 ```
 
 ## Rewrite Modes
@@ -27,7 +27,7 @@ Replace the registry host and keep the repository path.
 
 ```text
 docker.io/library/nginx:1.27
-=> docker.m.daocloud.io/library/nginx:1.27
+=> dockerproxy.cool/library/nginx:1.27
 ```
 
 ### `prefix`

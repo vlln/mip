@@ -27,7 +27,7 @@ func TestCandidatesForDockerHub(t *testing.T) {
 	if got[1].Image != profile.Mirrors[1].Host+"/library/nginx:1.27" {
 		t.Fatalf("unexpected prefix candidate: %s", got[1].Image)
 	}
-	if !hasCandidate(got, "docker.1panel.live/library/nginx:1.27") {
+	if !hasCandidate(got, "dockerproxy.cool/library/nginx:1.27") {
 		t.Fatal("missing curated Docker Hub mirror candidate")
 	}
 }

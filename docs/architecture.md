@@ -130,7 +130,7 @@ If a mirrored image reference differs from the normalized original, the tool sho
 Example:
 
 ```text
-pulled: docker.m.daocloud.io/library/nginx:1.27
+pulled: dockerproxy.cool/library/nginx:1.27
 target: docker.io/library/nginx:1.27
 ```
 

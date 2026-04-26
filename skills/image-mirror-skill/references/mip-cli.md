@@ -49,7 +49,7 @@ Example:
 prefer:
   - company-cache
 exclude:
-  - docker.m.daocloud.io
+  - dockerproxy.cool
 registries:
   docker.io:
     mirrors:
@@ -62,7 +62,7 @@ Mirror entries can usually be written as host strings:
 registries:
   docker.io:
     mirrors:
-      - docker.m.daocloud.io
+      - dockerproxy.cool
       - m.daocloud.io/docker.io
 ```
 

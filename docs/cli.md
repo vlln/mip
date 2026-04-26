@@ -146,7 +146,7 @@ Default human output should be compact:
 
 ```text
 image: docker.io/library/nginx:1.27
-selected: docker.m.daocloud.io/library/nginx:1.27
+selected: dockerproxy.cool/library/nginx:1.27
 engine: docker
 status: pulled
 elapsed: 8.2s
@@ -159,9 +159,9 @@ JSON output:
 ```json
 {
   "image": "docker.io/library/nginx:1.27",
-  "selected": "docker.m.daocloud.io/library/nginx:1.27",
+  "selected": "dockerproxy.cool/library/nginx:1.27",
   "registry": "docker.io",
-  "mirror": "docker.m.daocloud.io",
+  "mirror": "dockerproxy.cool",
   "engine": "docker",
   "status": "pulled",
   "elapsed_ms": 8200
