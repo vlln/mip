@@ -7,7 +7,7 @@
 Implemented:
 
 - Image reference parsing and normalization.
-- Official default config for Docker Hub, GHCR, Quay, MCR, registry.k8s.io, GCR, Elastic, and NVCR.
+- Official default config for common public registries including Docker Hub, GHCR, Quay, MCR, Kubernetes, GCR, Elastic, NVCR, DHI, and Ollama.
 - Mirror candidate rewriting.
 - Concurrent manifest probing with basic bearer-token auth handling.
 - Engine adapter abstraction for Docker, Podman, and nerdctl.

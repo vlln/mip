@@ -45,8 +45,8 @@ func TestBuildProbeCandidatesAddsSourceFallback(t *testing.T) {
 	}
 
 	got := buildProbeCandidates(appconfig.Profiles(appconfig.Default()), state.Store{}, image)
-	if len(got) != 3 {
-		t.Fatalf("candidate count = %d, want 3", len(got))
+	if len(got) < 3 {
+		t.Fatalf("candidate count = %d, want at least 3", len(got))
 	}
 	last := got[len(got)-1]
 	if last.Image != "docker.io/library/nginx:1.27" {

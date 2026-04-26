@@ -7,6 +7,23 @@ registries:
     mirrors:
       - docker.m.daocloud.io
       - m.daocloud.io/docker.io
+      - docker.1ms.run
+      - docker.1panel.live
+      - docker.m.ixdev.cn
+      - hub.rat.dev
+      - docker.xuanyuan.me
+      - docker-registry.nmqu.com
+      - hub.amingg.com
+      - docker.amingg.com
+      - docker.hlmirror.com
+      - hub1.nat.tf
+      - hub2.nat.tf
+      - hub3.nat.tf
+      - docker.kejilion.pro
+      - hub.1panel.dev
+      - dockerproxy.cool
+      - docker.apiba.cn
+      - proxy.vvvv.ee
   ghcr.io:
     mirrors:
       - ghcr.m.daocloud.io
@@ -25,10 +42,18 @@ registries:
     mirrors:
       - k8s.m.daocloud.io
       - m.daocloud.io/registry.k8s.io
+  k8s.gcr.io:
+    mirrors:
+      - k8s-gcr.m.daocloud.io
+      - m.daocloud.io/k8s.gcr.io
   gcr.io:
     mirrors:
       - gcr.m.daocloud.io
       - m.daocloud.io/gcr.io
+  dhi.io:
+    mirrors:
+      - dhi.m.daocloud.io
+      - m.daocloud.io/dhi.io
   docker.elastic.co:
     mirrors:
       - elastic.m.daocloud.io
@@ -37,3 +62,7 @@ registries:
     mirrors:
       - nvcr.m.daocloud.io
       - m.daocloud.io/nvcr.io
+  registry.ollama.ai:
+    mirrors:
+      - ollama.m.daocloud.io
+      - m.daocloud.io/registry.ollama.ai

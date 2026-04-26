@@ -13,6 +13,7 @@ default_namespace: library
 mirrors:
   - docker.m.daocloud.io
   - m.daocloud.io/docker.io
+  - docker.1panel.live
 ```
 
 ## Rewrite Modes
@@ -40,16 +41,6 @@ docker.io/library/nginx:1.27
 
 This is often safer for multi-registry mirrors because the source registry remains explicit.
 
-### `template`
-
-Reserved for registries that need special path mapping.
-
-```text
-template: "{{ .MirrorHost }}/{{ .Registry }}/{{ .Repository }}:{{ .Tag }}"
-```
-
-Do not add template rules until a concrete mirror requires them.
-
 ## Official Registry Scope
 
 The official default config in `configs/mip.yaml` currently covers:
@@ -59,17 +50,26 @@ The official default config in `configs/mip.yaml` currently covers:
 - `quay.io`
 - `mcr.microsoft.com`
 - `registry.k8s.io`
+- `k8s.gcr.io`
 - `gcr.io`
+- `dhi.io`
 - `docker.elastic.co`
 - `nvcr.io`
+- `registry.ollama.ai`
 
 ## Official Mirror Policy
 
 Official default mirrors must have:
 
 - A host that works with automatic rewrite-mode inference.
+- No known login, intranet-only, rate-limit, or other access restriction tag in
+  the reference data used for curation.
+- The same image-reference rewrite semantics as `mip`.
 
-Do not copy third-party mirror lists verbatim. Official defaults should be curated and documented, not scraped wholesale.
+Do not copy third-party mirror lists verbatim. Official defaults should be curated
+and documented, not scraped wholesale. Docker daemon `registry-mirrors` can be a
+useful signal, but a daemon mirror URL is not enough by itself because `mip`
+rewrites image references directly.
 
 Example mirror entry:
 

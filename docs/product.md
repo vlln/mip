@@ -2,7 +2,7 @@
 
 ## Problem
 
-Pulling public container images from mainland China is often slow or unreliable. A developer may need images from Docker Hub, GHCR, Quay, MCR, registry.k8s.io, GCR, Elastic, or NVCR, each with different mirror rules and availability patterns.
+Pulling public container images from mainland China is often slow or unreliable. A developer may need images from Docker Hub, GHCR, Quay, MCR, Kubernetes registries, GCR, Elastic, NVCR, DHI, or Ollama, each with different mirror rules and availability patterns.
 
 Existing approaches usually fall into one of two categories:
 
