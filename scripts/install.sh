@@ -26,6 +26,16 @@ else
   exit 1
 fi
 
+resolve_latest_version() {
+  tag="$($fetch "https://api.github.com/repos/${repo}/releases/latest" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+  tag="${tag#v}"
+  if [ -z "$tag" ]; then
+    echo "could not resolve latest release for ${repo}" >&2
+    exit 1
+  fi
+  printf '%s\n' "$tag"
+}
+
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"
 
@@ -42,13 +52,11 @@ case "$arch" in
 esac
 
 if [ "$version" = "latest" ]; then
-  base="https://github.com/${repo}/releases/latest/download"
-  artifact_version="latest"
-else
-  base="https://github.com/${repo}/releases/download/v${version}"
-  artifact_version="$version"
+  version="$(resolve_latest_version)"
 fi
 
+base="https://github.com/${repo}/releases/download/v${version}"
+artifact_version="$version"
 name="mip_${artifact_version}_${os}_${arch}"
 archive="${name}.tar.gz"
 tmp="$(mktemp -d)"
@@ -65,4 +73,3 @@ mkdir -p "$bindir"
 install -m 0755 "${tmp}/${name}/mip" "${bindir}/mip"
 echo "installed ${bindir}/mip"
 "${bindir}/mip" version
-
