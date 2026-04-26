@@ -102,11 +102,6 @@ provided, that single config is used instead of merging with the official one.
 Example:
 
 ```yaml
-engine: docker
-timeout: 8s
-pull_timeout: 10m
-parallel_probe: 6
-retries: 3
 prefer:
   - company-cache
 exclude:
@@ -116,8 +111,6 @@ registries:
     mirrors:
       - name: company-cache
         host: registry.example.com/docker.io
-        mode: prefix
-        priority: 100
 ```
 
 State path:

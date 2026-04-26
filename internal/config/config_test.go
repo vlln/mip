@@ -53,9 +53,7 @@ func TestLoadUsesOnlyUserConfigWhenPresent(t *testing.T) {
 registries:
   docker.io:
     mirrors:
-      - name: company-cache
-        host: registry.example.com/docker.io
-        mode: prefix
+      - registry.example.com/docker.io
 `)
 
 	cfg, err := Load(path)
@@ -69,6 +67,12 @@ registries:
 	profile, ok := FindProfile(Profiles(cfg), "docker.io")
 	if !ok || len(profile.Mirrors) != 1 {
 		t.Fatalf("unexpected docker.io profile: %+v", profile)
+	}
+	if profile.Mirrors[0].Name != "registry.example.com/docker.io" {
+		t.Fatalf("mirror name = %q", profile.Mirrors[0].Name)
+	}
+	if profile.Mirrors[0].Mode != registry.Prefix {
+		t.Fatalf("mirror mode = %q, want prefix", profile.Mirrors[0].Mode)
 	}
 }
 

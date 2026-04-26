@@ -1,8 +1,3 @@
-engine: docker
-timeout: 10s
-pull_timeout: 10m
-parallel_probe: 6
-retries: 3
 registries:
   docker.io:
     aliases:
@@ -10,83 +5,35 @@ registries:
       - registry-1.docker.io
     default_namespace: library
     mirrors:
-      - name: daocloud-docker-host
-        host: docker.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-docker-prefix
-        host: m.daocloud.io/docker.io
-        mode: prefix
-        priority: 80
+      - docker.m.daocloud.io
+      - m.daocloud.io/docker.io
   ghcr.io:
     mirrors:
-      - name: daocloud-ghcr-host
-        host: ghcr.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-ghcr-prefix
-        host: m.daocloud.io/ghcr.io
-        mode: prefix
-        priority: 80
+      - ghcr.m.daocloud.io
+      - m.daocloud.io/ghcr.io
   quay.io:
     mirrors:
-      - name: daocloud-quay-host
-        host: quay.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-quay-prefix
-        host: m.daocloud.io/quay.io
-        mode: prefix
-        priority: 80
+      - quay.m.daocloud.io
+      - m.daocloud.io/quay.io
   mcr.microsoft.com:
     mirrors:
-      - name: daocloud-mcr-host
-        host: mcr.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-mcr-prefix
-        host: m.daocloud.io/mcr.microsoft.com
-        mode: prefix
-        priority: 80
+      - mcr.m.daocloud.io
+      - m.daocloud.io/mcr.microsoft.com
   registry.k8s.io:
     aliases:
       - k8s.gcr.io
     mirrors:
-      - name: daocloud-k8s-host
-        host: k8s.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-k8s-prefix
-        host: m.daocloud.io/registry.k8s.io
-        mode: prefix
-        priority: 80
+      - k8s.m.daocloud.io
+      - m.daocloud.io/registry.k8s.io
   gcr.io:
     mirrors:
-      - name: daocloud-gcr-host
-        host: gcr.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-gcr-prefix
-        host: m.daocloud.io/gcr.io
-        mode: prefix
-        priority: 80
+      - gcr.m.daocloud.io
+      - m.daocloud.io/gcr.io
   docker.elastic.co:
     mirrors:
-      - name: daocloud-elastic-host
-        host: elastic.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-elastic-prefix
-        host: m.daocloud.io/docker.elastic.co
-        mode: prefix
-        priority: 80
+      - elastic.m.daocloud.io
+      - m.daocloud.io/docker.elastic.co
   nvcr.io:
     mirrors:
-      - name: daocloud-nvcr-host
-        host: nvcr.m.daocloud.io
-        mode: host-replace
-        priority: 90
-      - name: daocloud-nvcr-prefix
-        host: m.daocloud.io/nvcr.io
-        mode: prefix
-        priority: 80
+      - nvcr.m.daocloud.io
+      - m.daocloud.io/nvcr.io

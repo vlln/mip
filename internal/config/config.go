@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/vlln/mip/configs"
@@ -188,7 +189,7 @@ func Profiles(cfg Config) []registry.Profile {
 		if override.DefaultNamespace != "" {
 			profiles[index].DefaultNamespace = override.DefaultNamespace
 		}
-		profiles[index].Mirrors = append(profiles[index].Mirrors, normalizeMirrors(override.Mirrors)...)
+		profiles[index].Mirrors = append(profiles[index].Mirrors, normalizeMirrors(name, override.Mirrors)...)
 	}
 
 	for i := range profiles {
@@ -201,18 +202,29 @@ func Profiles(cfg Config) []registry.Profile {
 	return profiles
 }
 
-func normalizeMirrors(mirrors []registry.Mirror) []registry.Mirror {
+func normalizeMirrors(registryName string, mirrors []registry.Mirror) []registry.Mirror {
 	normalized := make([]registry.Mirror, 0, len(mirrors))
-	for _, mirror := range mirrors {
+	for index, mirror := range mirrors {
 		if mirror.Name == "" {
 			mirror.Name = mirror.Host
 		}
+		if mirror.Mode == "" {
+			mirror.Mode = inferMode(registryName, mirror.Host)
+		}
 		if mirror.Priority == 0 {
-			mirror.Priority = 100
+			mirror.Priority = 1000 - index
 		}
 		normalized = append(normalized, mirror)
 	}
 	return normalized
+}
+
+func inferMode(registryName string, host string) registry.RewriteMode {
+	trimmed := strings.TrimSuffix(host, "/")
+	if trimmed == registryName || strings.HasSuffix(trimmed, "/"+registryName) {
+		return registry.Prefix
+	}
+	return registry.HostReplace
 }
 
 func FindProfile(profiles []registry.Profile, registryName string) (registry.Profile, bool) {

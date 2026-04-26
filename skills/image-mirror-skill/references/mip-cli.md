@@ -46,10 +46,6 @@ provided, that single config is used instead of merging with the official one.
 Example:
 
 ```yaml
-engine: docker
-timeout: 8s
-pull_timeout: 10m
-parallel_probe: 6
 prefer:
   - company-cache
 exclude:
@@ -59,14 +55,17 @@ registries:
     mirrors:
       - name: company-cache
         host: registry.example.com/docker.io
-        mode: prefix
-        priority: 100
 ```
 
-Supported mirror rewrite modes:
+Mirror entries can usually be written as host strings:
 
-- `host-replace`: replace source registry host and keep repository path.
-- `prefix`: prefix the full canonical source registry path.
+```yaml
+registries:
+  docker.io:
+    mirrors:
+      - docker.m.daocloud.io
+      - m.daocloud.io/docker.io
+```
 
 ## State
 

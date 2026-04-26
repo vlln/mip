@@ -11,17 +11,14 @@ aliases:
   - registry-1.docker.io
 default_namespace: library
 mirrors:
-  - name: daocloud-docker
-    host: docker.m.daocloud.io
-    mode: host-replace
-    priority: 90
-  - name: daocloud-prefix
-    host: m.daocloud.io/docker.io
-    mode: prefix
-    priority: 80
+  - docker.m.daocloud.io
+  - m.daocloud.io/docker.io
 ```
 
 ## Rewrite Modes
+
+`mip` infers the rewrite mode from each mirror host. A host path that ends with
+the source registry uses `prefix`; other hosts use `host-replace`.
 
 ### `host-replace`
 
@@ -70,18 +67,14 @@ The official default config in `configs/mip.yaml` currently covers:
 
 Official default mirrors must have:
 
-- A known rewrite mode.
-- A conservative default priority.
+- A host that works with automatic rewrite-mode inference.
 
 Do not copy third-party mirror lists verbatim. Official defaults should be curated and documented, not scraped wholesale.
 
 Example mirror entry:
 
 ```yaml
-name: daocloud-prefix
-host: m.daocloud.io/docker.io
-mode: prefix
-priority: 80
+- m.daocloud.io/docker.io
 ```
 
 ## User Configuration
@@ -90,17 +83,12 @@ Users can add or override mirrors:
 
 ```yaml
 engine: docker
-timeout: 8s
-pull_timeout: 10m
-parallel_probe: 6
 
 registries:
   ghcr.io:
     mirrors:
       - name: company-cache-ghcr
         host: registry.example.com/ghcr.io
-        mode: prefix
-        priority: 100
 ```
 
 Users can prefer or exclude mirrors by name or host:

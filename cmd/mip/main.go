@@ -178,7 +178,6 @@ func runRewrite(args []string) int {
 		fmt.Fprintf(os.Stdout, "candidate[%d]: %s\n", i, candidate.Image)
 		fmt.Fprintf(os.Stdout, "  mirror: %s\n", candidate.Mirror.Name)
 		fmt.Fprintf(os.Stdout, "  mode: %s\n", candidate.Mode)
-		fmt.Fprintf(os.Stdout, "  priority: %d\n", candidate.Priority)
 	}
 	return exitOK
 }
@@ -659,7 +658,7 @@ func runMirrorsList(args []string) int {
 	for _, profile := range profiles {
 		fmt.Fprintf(os.Stdout, "%s\n", profile.Name)
 		for _, mirror := range profile.Mirrors {
-			fmt.Fprintf(os.Stdout, "  %s %s %s priority=%d\n", mirror.Name, mirror.Host, mirror.Mode, mirror.Priority)
+			fmt.Fprintf(os.Stdout, "  %s %s\n", mirror.Host, mirror.Mode)
 		}
 	}
 	return exitOK
