@@ -71,6 +71,11 @@ and documented, not scraped wholesale. Docker daemon `registry-mirrors` can be a
 useful signal, but a daemon mirror URL is not enough by itself because `mip`
 rewrites image references directly.
 
+Mirrors marked as login-required are excluded from the official config. `mip`
+currently supports anonymous bearer-token challenges during manifest probing, but
+it does not read Docker credential stores or send username/password credentials
+to third-party mirrors.
+
 Example mirror entry:
 
 ```yaml

@@ -14,11 +14,13 @@ registries:
       - docker.apiba.cn
   ghcr.io:
     mirrors:
+      - ghcr.1ms.run
+      - ghcr.dockerproxy.net
       - ghcr.m.daocloud.io
       - m.daocloud.io/ghcr.io
   quay.io:
     mirrors:
-      - quay.m.daocloud.io
+      - quay.dockerproxy.net
       - m.daocloud.io/quay.io
   mcr.microsoft.com:
     mirrors:
@@ -28,7 +30,6 @@ registries:
     aliases:
       - k8s.gcr.io
     mirrors:
-      - k8s.m.daocloud.io
       - m.daocloud.io/registry.k8s.io
   k8s.gcr.io:
     mirrors:
@@ -36,7 +37,7 @@ registries:
       - m.daocloud.io/k8s.gcr.io
   gcr.io:
     mirrors:
-      - gcr.m.daocloud.io
+      - gcr.dockerproxy.net
       - m.daocloud.io/gcr.io
   dhi.io:
     mirrors:
@@ -44,7 +45,6 @@ registries:
       - m.daocloud.io/dhi.io
   docker.elastic.co:
     mirrors:
-      - elastic.m.daocloud.io
       - m.daocloud.io/docker.elastic.co
   nvcr.io:
     mirrors:
