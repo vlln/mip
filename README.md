@@ -44,8 +44,12 @@ mip version
 ### Install script
 
 ```bash
-MIP_VERSION=0.1.0 MIP_BINDIR="$HOME/.local/bin" ./scripts/install.sh
+./scripts/install.sh
 ```
+
+By default, the script installs the latest GitHub release to `/usr/local/bin`.
+Use `MIP_VERSION` or `MIP_BINDIR` only when pinning a version or installing to a
+custom directory.
 
 ## Quick Start
 

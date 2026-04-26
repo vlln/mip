@@ -38,7 +38,7 @@ Each archive includes:
 The install script downloads a GitHub release archive, checks SHA-256 sums, and installs `mip`. When `MIP_VERSION=latest`, it resolves the latest GitHub release tag before selecting the archive name.
 
 ```bash
-MIP_VERSION=0.1.0 MIP_BINDIR="$HOME/.local/bin" ./scripts/install.sh
+./scripts/install.sh
 ```
 
 Environment variables:
