@@ -48,39 +48,8 @@ registries:
 	}
 }
 
-func TestProfilesMergeCustomMirrorAndPrefer(t *testing.T) {
-	cfg := Default()
-	cfg.Prefer = []string{"company-cache"}
-	cfg.Registries = map[string]RegistryOverride{
-		"docker.io": {
-			Mirrors: []registry.Mirror{
-				{Name: "company-cache", Host: "registry.example.com/docker.io", Mode: registry.Prefix, Priority: 100},
-			},
-		},
-	}
-
-	profile, ok := FindProfile(Profiles(cfg), "docker.io")
-	if !ok {
-		t.Fatal("missing docker.io profile")
-	}
-
-	var found registry.Mirror
-	for _, mirror := range profile.Mirrors {
-		if mirror.Name == "company-cache" {
-			found = mirror
-		}
-	}
-	if found.Name == "" {
-		t.Fatal("custom mirror was not merged")
-	}
-	if found.Priority != 1100 {
-		t.Fatalf("preferred mirror priority = %d, want 1100", found.Priority)
-	}
-}
-
-func TestProfilesDisableBuiltins(t *testing.T) {
+func TestLoadUsesOnlyUserConfigWhenPresent(t *testing.T) {
 	path := writeConfig(t, `
-disable_builtin_mirrors: true
 registries:
   docker.io:
     mirrors:
@@ -93,30 +62,31 @@ registries:
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, ok := FindProfile(Profiles(cfg), "ghcr.io"); ok {
+		t.Fatal("official ghcr.io profile should not be merged into user config")
+	}
+
 	profile, ok := FindProfile(Profiles(cfg), "docker.io")
-	if !ok {
-		t.Fatal("missing docker.io profile")
-	}
-	if len(profile.Mirrors) != 1 {
-		t.Fatalf("profile mirrors len = %d, want 1", len(profile.Mirrors))
-	}
-	if profile.Mirrors[0].Name != "company-cache" {
-		t.Fatalf("mirror name = %q, want company-cache", profile.Mirrors[0].Name)
+	if !ok || len(profile.Mirrors) != 1 {
+		t.Fatalf("unexpected docker.io profile: %+v", profile)
 	}
 }
 
-func TestOfficialConfigCanBeLoadedWithoutDuplicateMirrors(t *testing.T) {
-	cfg, err := Load(filepath.Join("..", "..", "configs", "mip.yaml"))
-	if err != nil {
-		t.Fatal(err)
+func TestProfilesPreferMirror(t *testing.T) {
+	cfg := Config{
+		Prefer: []string{"company-cache"},
+		Registries: map[string]RegistryOverride{
+			"docker.io": {
+				Mirrors: []registry.Mirror{
+					{Name: "company-cache", Host: "registry.example.com/docker.io", Mode: registry.Prefix, Priority: 100},
+				},
+			},
+		},
 	}
 
-	profile, ok := FindProfile(Profiles(cfg), "docker.io")
-	if !ok {
-		t.Fatal("missing docker.io profile")
-	}
-	if len(profile.Mirrors) != 2 {
-		t.Fatalf("docker.io mirrors len = %d, want 2", len(profile.Mirrors))
+	profile, _ := FindProfile(Profiles(cfg), "docker.io")
+	if got := profile.Mirrors[0].Priority; got != 1100 {
+		t.Fatalf("preferred mirror priority = %d, want 1100", got)
 	}
 }
 

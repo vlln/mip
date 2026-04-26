@@ -121,7 +121,7 @@ The probe command should check manifest availability and latency. It should not 
 
 ## `mirrors list`
 
-List built-in and configured mirrors.
+List configured mirrors.
 
 ```bash
 mip mirrors list
@@ -131,14 +131,14 @@ mip mirrors list --json
 
 ## `config show`
 
-Print the merged config from defaults, config file, and environment.
+Print the effective config from defaults and the selected config file.
 
 ```bash
 mip config show
 mip config show --config ./mip.yaml
 ```
 
-The output includes `effective_profiles`, which is the registry profile list after applying the official default config, user mirrors, disabled mirrors, prefer, and exclude rules.
+The output includes `effective_profiles`, which is the registry profile list after applying prefer and exclude rules.
 
 ## Output
 

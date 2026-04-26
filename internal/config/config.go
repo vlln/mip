@@ -16,17 +16,15 @@ import (
 )
 
 type Config struct {
-	Engine                string                      `json:"engine" yaml:"engine"`
-	Timeout               time.Duration               `json:"timeout" yaml:"-"`
-	PullTimeout           time.Duration               `json:"pull_timeout" yaml:"-"`
-	ParallelProbe         int                         `json:"parallel_probe" yaml:"parallel_probe"`
-	Retries               int                         `json:"retries" yaml:"retries"`
-	DisableBuiltinMirrors bool                        `json:"disable_builtin_mirrors" yaml:"disable_builtin_mirrors"`
-	DisabledMirrors       []string                    `json:"disabled_mirrors" yaml:"disabled_mirrors"`
-	Prefer                []string                    `json:"prefer" yaml:"prefer"`
-	Exclude               []string                    `json:"exclude" yaml:"exclude"`
-	Registries            map[string]RegistryOverride `json:"registries" yaml:"registries"`
-	LoadedFrom            string                      `json:"loaded_from,omitempty" yaml:"-"`
+	Engine        string                      `json:"engine" yaml:"engine"`
+	Timeout       time.Duration               `json:"timeout" yaml:"-"`
+	PullTimeout   time.Duration               `json:"pull_timeout" yaml:"-"`
+	ParallelProbe int                         `json:"parallel_probe" yaml:"parallel_probe"`
+	Retries       int                         `json:"retries" yaml:"retries"`
+	Prefer        []string                    `json:"prefer" yaml:"prefer"`
+	Exclude       []string                    `json:"exclude" yaml:"exclude"`
+	Registries    map[string]RegistryOverride `json:"registries" yaml:"registries"`
+	LoadedFrom    string                      `json:"loaded_from,omitempty" yaml:"-"`
 }
 
 type RegistryOverride struct {
@@ -36,16 +34,14 @@ type RegistryOverride struct {
 }
 
 type fileConfig struct {
-	Engine                string                      `yaml:"engine"`
-	Timeout               string                      `yaml:"timeout"`
-	PullTimeout           string                      `yaml:"pull_timeout"`
-	ParallelProbe         int                         `yaml:"parallel_probe"`
-	Retries               int                         `yaml:"retries"`
-	DisableBuiltinMirrors bool                        `yaml:"disable_builtin_mirrors"`
-	DisabledMirrors       []string                    `yaml:"disabled_mirrors"`
-	Prefer                []string                    `yaml:"prefer"`
-	Exclude               []string                    `yaml:"exclude"`
-	Registries            map[string]RegistryOverride `yaml:"registries"`
+	Engine        string                      `yaml:"engine"`
+	Timeout       string                      `yaml:"timeout"`
+	PullTimeout   string                      `yaml:"pull_timeout"`
+	ParallelProbe int                         `yaml:"parallel_probe"`
+	Retries       int                         `yaml:"retries"`
+	Prefer        []string                    `yaml:"prefer"`
+	Exclude       []string                    `yaml:"exclude"`
+	Registries    map[string]RegistryOverride `yaml:"registries"`
 }
 
 func Default() Config {
@@ -81,17 +77,7 @@ func Load(path string) (Config, error) {
 		return Config{}, err
 	}
 
-	file, err := parseYAML(data, resolved)
-	if err != nil {
-		return Config{}, err
-	}
-
 	cfg := defaultBase()
-	if !file.DisableBuiltinMirrors {
-		if err := mergeYAML(&cfg, configs.Official, "official config"); err != nil {
-			return Config{}, err
-		}
-	}
 	if err := mergeYAML(&cfg, data, resolved); err != nil {
 		return Config{}, err
 	}
@@ -140,8 +126,6 @@ func mergeYAML(cfg *Config, data []byte, label string) error {
 	if file.Retries != 0 {
 		cfg.Retries = file.Retries
 	}
-	cfg.DisableBuiltinMirrors = file.DisableBuiltinMirrors
-	cfg.DisabledMirrors = file.DisabledMirrors
 	cfg.Prefer = file.Prefer
 	cfg.Exclude = file.Exclude
 	if file.Registries != nil {
@@ -156,37 +140,11 @@ func mergeYAML(cfg *Config, data []byte, label string) error {
 			if override.DefaultNamespace != "" {
 				current.DefaultNamespace = override.DefaultNamespace
 			}
-			current.Mirrors = mergeMirrors(current.Mirrors, override.Mirrors)
+			current.Mirrors = append(current.Mirrors, override.Mirrors...)
 			cfg.Registries[name] = current
 		}
 	}
 	return nil
-}
-
-func mergeMirrors(base []registry.Mirror, overrides []registry.Mirror) []registry.Mirror {
-	merged := append([]registry.Mirror{}, base...)
-	for _, override := range overrides {
-		key := mirrorKey(override)
-		replaced := false
-		for i, existing := range merged {
-			if mirrorKey(existing) == key {
-				merged[i] = override
-				replaced = true
-				break
-			}
-		}
-		if !replaced {
-			merged = append(merged, override)
-		}
-	}
-	return merged
-}
-
-func mirrorKey(mirror registry.Mirror) string {
-	if mirror.Name != "" {
-		return "name:" + mirror.Name
-	}
-	return "host:" + mirror.Host + "|mode:" + string(mirror.Mode)
 }
 
 func validate(cfg Config) error {
@@ -234,7 +192,7 @@ func Profiles(cfg Config) []registry.Profile {
 	}
 
 	for i := range profiles {
-		profiles[i].Mirrors = filterMirrors(profiles[i].Mirrors, cfg.DisabledMirrors, cfg.Exclude)
+		profiles[i].Mirrors = filterMirrors(profiles[i].Mirrors, cfg.Exclude)
 		applyPreference(profiles[i].Mirrors, cfg.Prefer)
 	}
 	sort.Slice(profiles, func(i, j int) bool {
@@ -252,7 +210,6 @@ func normalizeMirrors(mirrors []registry.Mirror) []registry.Mirror {
 		if mirror.Priority == 0 {
 			mirror.Priority = 100
 		}
-		mirror.EnabledByDefault = true
 		normalized = append(normalized, mirror)
 	}
 	return normalized
@@ -290,10 +247,10 @@ func resolvePath(path string) (string, bool, error) {
 	return "", false, nil
 }
 
-func filterMirrors(mirrors []registry.Mirror, disabled []string, excluded []string) []registry.Mirror {
+func filterMirrors(mirrors []registry.Mirror, excluded []string) []registry.Mirror {
 	filtered := make([]registry.Mirror, 0, len(mirrors))
 	for _, mirror := range mirrors {
-		if slices.Contains(disabled, mirror.Name) || slices.Contains(excluded, mirror.Name) || slices.Contains(excluded, mirror.Host) {
+		if slices.Contains(excluded, mirror.Name) || slices.Contains(excluded, mirror.Host) {
 			continue
 		}
 		filtered = append(filtered, mirror)

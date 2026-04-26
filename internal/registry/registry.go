@@ -8,13 +8,10 @@ const (
 )
 
 type Mirror struct {
-	Name             string      `json:"name" yaml:"name"`
-	Host             string      `json:"host" yaml:"host"`
-	Mode             RewriteMode `json:"mode" yaml:"mode"`
-	Priority         int         `json:"priority" yaml:"priority"`
-	Source           string      `json:"source,omitempty" yaml:"source,omitempty"`
-	ReviewedAt       string      `json:"reviewed_at,omitempty" yaml:"reviewed_at,omitempty"`
-	EnabledByDefault bool        `json:"enabled_by_default" yaml:"enabled_by_default"`
+	Name     string      `json:"name" yaml:"name"`
+	Host     string      `json:"host" yaml:"host"`
+	Mode     RewriteMode `json:"mode" yaml:"mode"`
+	Priority int         `json:"priority" yaml:"priority"`
 }
 
 type Profile struct {

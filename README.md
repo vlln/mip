@@ -7,12 +7,12 @@
 Implemented:
 
 - Image reference parsing and normalization.
-- Built-in registry profiles for Docker Hub, GHCR, Quay, MCR, registry.k8s.io, GCR, Elastic, and NVCR.
+- Official default config for Docker Hub, GHCR, Quay, MCR, registry.k8s.io, GCR, Elastic, and NVCR.
 - Mirror candidate rewriting.
 - Concurrent manifest probing with basic bearer-token auth handling.
 - Engine adapter abstraction for Docker, Podman, and nerdctl.
 - Digest verification after pull when the selected manifest digest is known.
-- XDG config loading with custom mirrors, disabled mirrors, prefer, exclude, and default engine.
+- XDG config loading with custom mirrors, prefer, exclude, and default engine.
 - XDG state file with historical mirror health scoring.
 - Platform-aware manifest list selection for `--platform`.
 - `mip rewrite`.
@@ -96,7 +96,8 @@ Default config paths:
 
 The official default config is [configs/mip.yaml](configs/mip.yaml). It is
 embedded into the binary for zero-config use and included in release archives so
-users can copy it as a starting point.
+users can copy it as a starting point. If a user config exists or `--config` is
+provided, that single config is used instead of merging with the official one.
 
 Example:
 

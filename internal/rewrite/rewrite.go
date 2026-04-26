@@ -20,9 +20,6 @@ type Candidate struct {
 func Candidates(image ref.Reference, profile registry.Profile) []Candidate {
 	candidates := make([]Candidate, 0, len(profile.Mirrors))
 	for _, mirror := range profile.Mirrors {
-		if !mirror.EnabledByDefault {
-			continue
-		}
 		rewritten, ok := rewrite(image, profile.Name, mirror)
 		if !ok {
 			continue

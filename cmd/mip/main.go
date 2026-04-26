@@ -146,7 +146,7 @@ func runRewrite(args []string) int {
 			fmt.Fprintln(os.Stdout, image.String())
 			return exitOK
 		}
-		fmt.Fprintf(os.Stderr, "no built-in mirrors for registry %q\n", image.Registry)
+		fmt.Fprintf(os.Stderr, "no configured mirrors for registry %q\n", image.Registry)
 		fmt.Fprintln(os.Stdout, image.String())
 		return exitNoUsableMirror
 	}
@@ -522,11 +522,10 @@ func sourceCandidate(image ref.Reference, registryName string) rewrite.Candidate
 		Image:    image.String(),
 		Registry: registryName,
 		Mirror: registry.Mirror{
-			Name:             "source",
-			Host:             image.Registry,
-			Mode:             registry.HostReplace,
-			Priority:         -10000,
-			EnabledByDefault: true,
+			Name:     "source",
+			Host:     image.Registry,
+			Mode:     registry.HostReplace,
+			Priority: -10000,
 		},
 		Mode:     registry.HostReplace,
 		Priority: -10000,
@@ -660,11 +659,7 @@ func runMirrorsList(args []string) int {
 	for _, profile := range profiles {
 		fmt.Fprintf(os.Stdout, "%s\n", profile.Name)
 		for _, mirror := range profile.Mirrors {
-			status := "disabled"
-			if mirror.EnabledByDefault {
-				status = "enabled"
-			}
-			fmt.Fprintf(os.Stdout, "  %s %s %s priority=%d %s\n", mirror.Name, mirror.Host, mirror.Mode, mirror.Priority, status)
+			fmt.Fprintf(os.Stdout, "  %s %s %s priority=%d\n", mirror.Name, mirror.Host, mirror.Mode, mirror.Priority)
 		}
 	}
 	return exitOK
@@ -689,20 +684,18 @@ func runConfig(args []string) int {
 		return exitConfigError
 	}
 	_ = output.JSON(os.Stdout, map[string]any{
-		"engine":                  cfg.Engine,
-		"engines":                 engine.Names(),
-		"timeout":                 cfg.Timeout.String(),
-		"pull_timeout":            cfg.PullTimeout.String(),
-		"parallel_probe":          cfg.ParallelProbe,
-		"retries":                 cfg.Retries,
-		"disable_builtin_mirrors": cfg.DisableBuiltinMirrors,
-		"disabled_mirrors":        cfg.DisabledMirrors,
-		"prefer":                  cfg.Prefer,
-		"exclude":                 cfg.Exclude,
-		"registries":              cfg.Registries,
-		"effective_profiles":      appconfig.Profiles(cfg),
-		"loaded_from":             cfg.LoadedFrom,
-		"config_files":            appconfig.Paths(),
+		"engine":             cfg.Engine,
+		"engines":            engine.Names(),
+		"timeout":            cfg.Timeout.String(),
+		"pull_timeout":       cfg.PullTimeout.String(),
+		"parallel_probe":     cfg.ParallelProbe,
+		"retries":            cfg.Retries,
+		"prefer":             cfg.Prefer,
+		"exclude":            cfg.Exclude,
+		"registries":         cfg.Registries,
+		"effective_profiles": appconfig.Profiles(cfg),
+		"loaded_from":        cfg.LoadedFrom,
+		"config_files":       appconfig.Paths(),
 	})
 	return exitOK
 }

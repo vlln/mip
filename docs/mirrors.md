@@ -70,24 +70,18 @@ The official default config in `configs/mip.yaml` currently covers:
 
 Official default mirrors must have:
 
-- A public source URL documenting the service.
 - A known rewrite mode.
-- A last-reviewed date.
 - A conservative default priority.
-- A way for users to disable them.
 
 Do not copy third-party mirror lists verbatim. Official defaults should be curated and documented, not scraped wholesale.
 
-Example metadata:
+Example mirror entry:
 
 ```yaml
 name: daocloud-prefix
 host: m.daocloud.io/docker.io
 mode: prefix
-source: https://github.com/DaoCloud/public-image-mirror
-reviewed_at: 2026-04-26
 priority: 80
-enabled_by_default: true
 ```
 
 ## User Configuration
@@ -107,19 +101,6 @@ registries:
         host: registry.example.com/ghcr.io
         mode: prefix
         priority: 100
-```
-
-Users can disable official default mirrors:
-
-```yaml
-disable_builtin_mirrors: true
-```
-
-Or disable one mirror:
-
-```yaml
-disabled_mirrors:
-  - daocloud-prefix
 ```
 
 Users can prefer or exclude mirrors by name or host:

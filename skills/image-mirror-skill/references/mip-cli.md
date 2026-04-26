@@ -40,7 +40,8 @@ Default paths:
 - `~/.config/mip/config.yaml`
 
 The official default config is distributed as `configs/mip.yaml` and is embedded
-into `mip` for zero-config mirror use.
+into `mip` for zero-config mirror use. If a user config exists or `--config` is
+provided, that single config is used instead of merging with the official one.
 
 Example:
 

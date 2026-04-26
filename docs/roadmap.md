@@ -48,7 +48,7 @@ Required behavior:
 - Add Podman adapter. Done.
 - Add nerdctl adapter. Done.
 - Implement XDG config loading. Done.
-- Add `prefer`, `exclude`, disabled mirrors, and per-registry config. Done.
+- Add `prefer`, `exclude`, and per-registry config. Done.
 - Implement local probe cache and historical mirror health scoring. Done.
 - Add platform-aware probing. Done.
 

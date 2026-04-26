@@ -9,7 +9,7 @@ The directories at the repository root are third-party open source tools downloa
 - [Product Brief](product.md): purpose, users, goals, non-goals, and design principles.
 - [CLI Specification](cli.md): commands, flags, output, exit codes, and examples.
 - [Architecture](architecture.md): modules, data flow, engine adapters, and persistence.
-- [Mirror Model](mirrors.md): registry profiles, rewrite modes, scoring, and built-in source policy.
+- [Mirror Model](mirrors.md): registry profiles, rewrite modes, scoring, and official config policy.
 - [Roadmap](roadmap.md): MVP scope and implementation phases.
 - [Release](release.md): local builds, release archives, and version metadata.
 
