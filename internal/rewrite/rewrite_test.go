@@ -3,8 +3,8 @@ package rewrite
 import (
 	"testing"
 
+	appconfig "github.com/vlln/mip/internal/config"
 	"github.com/vlln/mip/internal/ref"
-	"github.com/vlln/mip/internal/registry"
 )
 
 func TestCandidatesForDockerHub(t *testing.T) {
@@ -12,7 +12,7 @@ func TestCandidatesForDockerHub(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	profile, ok := registry.FindProfile(image.Registry)
+	profile, ok := appconfig.FindProfile(appconfig.Profiles(appconfig.Default()), image.Registry)
 	if !ok {
 		t.Fatal("missing docker.io profile")
 	}
@@ -21,10 +21,10 @@ func TestCandidatesForDockerHub(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("expected 2 candidates, got %d", len(got))
 	}
-	if got[0].Image != "docker.m.daocloud.io/library/nginx:1.27" {
+	if got[0].Image != profile.Mirrors[0].Host+"/library/nginx:1.27" {
 		t.Fatalf("unexpected host replacement candidate: %s", got[0].Image)
 	}
-	if got[1].Image != "m.daocloud.io/docker.io/library/nginx:1.27" {
+	if got[1].Image != profile.Mirrors[1].Host+"/library/nginx:1.27" {
 		t.Fatalf("unexpected prefix candidate: %s", got[1].Image)
 	}
 }
@@ -34,7 +34,7 @@ func TestCandidatesForGHCR(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	profile, ok := registry.FindProfile(image.Registry)
+	profile, ok := appconfig.FindProfile(appconfig.Profiles(appconfig.Default()), image.Registry)
 	if !ok {
 		t.Fatal("missing ghcr.io profile")
 	}
@@ -43,10 +43,10 @@ func TestCandidatesForGHCR(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("expected 2 candidates, got %d", len(got))
 	}
-	if got[0].Image != "ghcr.m.daocloud.io/actions/actions-runner:latest" {
+	if got[0].Image != profile.Mirrors[0].Host+"/actions/actions-runner:latest" {
 		t.Fatalf("unexpected host replacement candidate: %s", got[0].Image)
 	}
-	if got[1].Image != "m.daocloud.io/ghcr.io/actions/actions-runner:latest" {
+	if got[1].Image != profile.Mirrors[1].Host+"/actions/actions-runner:latest" {
 		t.Fatalf("unexpected prefix candidate: %s", got[1].Image)
 	}
 }

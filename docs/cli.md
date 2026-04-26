@@ -138,7 +138,7 @@ mip config show
 mip config show --config ./mip.yaml
 ```
 
-The output includes `effective_profiles`, which is the registry profile list after applying built-ins, user mirrors, disabled mirrors, prefer, and exclude rules.
+The output includes `effective_profiles`, which is the registry profile list after applying the official default config, user mirrors, disabled mirrors, prefer, and exclude rules.
 
 ## Output
 

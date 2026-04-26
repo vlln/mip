@@ -30,6 +30,7 @@ Each archive includes:
 - `mip` or `mip.exe`
 - `README.md`
 - `docs/`
+- `configs/mip.yaml`
 
 `dist/checksums.txt` contains SHA-256 checksums.
 

@@ -6,8 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"time"
 
+	"github.com/vlln/mip/configs"
 	"github.com/vlln/mip/internal/engine"
 	"github.com/vlln/mip/internal/registry"
 	"gopkg.in/yaml.v3"
@@ -47,6 +49,14 @@ type fileConfig struct {
 }
 
 func Default() Config {
+	cfg := defaultBase()
+	if err := mergeYAML(&cfg, configs.Official, "official config"); err != nil {
+		panic(err)
+	}
+	return cfg
+}
+
+func defaultBase() Config {
 	return Config{
 		Engine:        "docker",
 		Timeout:       10 * time.Second,
@@ -58,13 +68,12 @@ func Default() Config {
 }
 
 func Load(path string) (Config, error) {
-	cfg := Default()
 	resolved, ok, err := resolvePath(path)
 	if err != nil {
 		return Config{}, err
 	}
 	if !ok {
-		return cfg, nil
+		return Default(), nil
 	}
 
 	data, err := os.ReadFile(resolved)
@@ -72,25 +81,58 @@ func Load(path string) (Config, error) {
 		return Config{}, err
 	}
 
+	file, err := parseYAML(data, resolved)
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg := defaultBase()
+	if !file.DisableBuiltinMirrors {
+		if err := mergeYAML(&cfg, configs.Official, "official config"); err != nil {
+			return Config{}, err
+		}
+	}
+	if err := mergeYAML(&cfg, data, resolved); err != nil {
+		return Config{}, err
+	}
+	cfg.LoadedFrom = resolved
+
+	if err := validate(cfg); err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
+}
+
+func parseYAML(data []byte, label string) (fileConfig, error) {
 	var file fileConfig
 	if err := yaml.Unmarshal(data, &file); err != nil {
-		return Config{}, fmt.Errorf("parse config %s: %w", resolved, err)
+		return fileConfig{}, fmt.Errorf("parse config %s: %w", label, err)
+	}
+	return file, nil
+}
+
+func mergeYAML(cfg *Config, data []byte, label string) error {
+	file, err := parseYAML(data, label)
+	if err != nil {
+		return err
 	}
 
 	if file.Engine != "" {
 		cfg.Engine = file.Engine
 	}
 	if file.Timeout != "" {
-		cfg.Timeout, err = time.ParseDuration(file.Timeout)
+		timeout, err := time.ParseDuration(file.Timeout)
 		if err != nil {
-			return Config{}, fmt.Errorf("parse timeout: %w", err)
+			return fmt.Errorf("parse timeout: %w", err)
 		}
+		cfg.Timeout = timeout
 	}
 	if file.PullTimeout != "" {
-		cfg.PullTimeout, err = time.ParseDuration(file.PullTimeout)
+		pullTimeout, err := time.ParseDuration(file.PullTimeout)
 		if err != nil {
-			return Config{}, fmt.Errorf("parse pull_timeout: %w", err)
+			return fmt.Errorf("parse pull_timeout: %w", err)
 		}
+		cfg.PullTimeout = pullTimeout
 	}
 	if file.ParallelProbe != 0 {
 		cfg.ParallelProbe = file.ParallelProbe
@@ -103,20 +145,61 @@ func Load(path string) (Config, error) {
 	cfg.Prefer = file.Prefer
 	cfg.Exclude = file.Exclude
 	if file.Registries != nil {
-		cfg.Registries = file.Registries
+		if cfg.Registries == nil {
+			cfg.Registries = map[string]RegistryOverride{}
+		}
+		for name, override := range file.Registries {
+			current := cfg.Registries[name]
+			if len(override.Aliases) > 0 {
+				current.Aliases = override.Aliases
+			}
+			if override.DefaultNamespace != "" {
+				current.DefaultNamespace = override.DefaultNamespace
+			}
+			current.Mirrors = mergeMirrors(current.Mirrors, override.Mirrors)
+			cfg.Registries[name] = current
+		}
 	}
-	cfg.LoadedFrom = resolved
+	return nil
+}
 
+func mergeMirrors(base []registry.Mirror, overrides []registry.Mirror) []registry.Mirror {
+	merged := append([]registry.Mirror{}, base...)
+	for _, override := range overrides {
+		key := mirrorKey(override)
+		replaced := false
+		for i, existing := range merged {
+			if mirrorKey(existing) == key {
+				merged[i] = override
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
+			merged = append(merged, override)
+		}
+	}
+	return merged
+}
+
+func mirrorKey(mirror registry.Mirror) string {
+	if mirror.Name != "" {
+		return "name:" + mirror.Name
+	}
+	return "host:" + mirror.Host + "|mode:" + string(mirror.Mode)
+}
+
+func validate(cfg Config) error {
 	if !engine.IsSupported(cfg.Engine) {
-		return Config{}, fmt.Errorf("unsupported engine %q; supported engines: %v", cfg.Engine, engine.Names())
+		return fmt.Errorf("unsupported engine %q; supported engines: %v", cfg.Engine, engine.Names())
 	}
 	if cfg.ParallelProbe < 1 {
-		return Config{}, errors.New("parallel_probe must be at least 1")
+		return errors.New("parallel_probe must be at least 1")
 	}
 	if cfg.Retries < 1 {
-		return Config{}, errors.New("retries must be at least 1")
+		return errors.New("retries must be at least 1")
 	}
-	return cfg, nil
+	return nil
 }
 
 func Paths() []string {
@@ -132,10 +215,6 @@ func Paths() []string {
 
 func Profiles(cfg Config) []registry.Profile {
 	profiles := []registry.Profile{}
-	if !cfg.DisableBuiltinMirrors {
-		profiles = registry.Builtins()
-	}
-
 	for name, override := range cfg.Registries {
 		index := slices.IndexFunc(profiles, func(profile registry.Profile) bool {
 			return profile.Name == name
@@ -151,23 +230,32 @@ func Profiles(cfg Config) []registry.Profile {
 		if override.DefaultNamespace != "" {
 			profiles[index].DefaultNamespace = override.DefaultNamespace
 		}
-		for _, mirror := range override.Mirrors {
-			if mirror.Name == "" {
-				mirror.Name = mirror.Host
-			}
-			if mirror.Priority == 0 {
-				mirror.Priority = 100
-			}
-			mirror.EnabledByDefault = true
-			profiles[index].Mirrors = append(profiles[index].Mirrors, mirror)
-		}
+		profiles[index].Mirrors = append(profiles[index].Mirrors, normalizeMirrors(override.Mirrors)...)
 	}
 
 	for i := range profiles {
 		profiles[i].Mirrors = filterMirrors(profiles[i].Mirrors, cfg.DisabledMirrors, cfg.Exclude)
 		applyPreference(profiles[i].Mirrors, cfg.Prefer)
 	}
+	sort.Slice(profiles, func(i, j int) bool {
+		return profiles[i].Name < profiles[j].Name
+	})
 	return profiles
+}
+
+func normalizeMirrors(mirrors []registry.Mirror) []registry.Mirror {
+	normalized := make([]registry.Mirror, 0, len(mirrors))
+	for _, mirror := range mirrors {
+		if mirror.Name == "" {
+			mirror.Name = mirror.Host
+		}
+		if mirror.Priority == 0 {
+			mirror.Priority = 100
+		}
+		mirror.EnabledByDefault = true
+		normalized = append(normalized, mirror)
+	}
+	return normalized
 }
 
 func FindProfile(profiles []registry.Profile, registryName string) (registry.Profile, bool) {

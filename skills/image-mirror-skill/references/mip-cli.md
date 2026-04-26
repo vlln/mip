@@ -39,6 +39,9 @@ Default paths:
 - `$XDG_CONFIG_HOME/mip/config.yaml`
 - `~/.config/mip/config.yaml`
 
+The official default config is distributed as `configs/mip.yaml` and is embedded
+into `mip` for zero-config mirror use.
+
 Example:
 
 ```yaml

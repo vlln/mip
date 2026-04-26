@@ -53,9 +53,9 @@ template: "{{ .MirrorHost }}/{{ .Registry }}/{{ .Repository }}:{{ .Tag }}"
 
 Do not add template rules until a concrete mirror requires them.
 
-## Built-In Registry Scope
+## Official Registry Scope
 
-Initial built-in profiles:
+The official default config in `configs/mip.yaml` currently covers:
 
 - `docker.io`
 - `ghcr.io`
@@ -66,9 +66,9 @@ Initial built-in profiles:
 - `docker.elastic.co`
 - `nvcr.io`
 
-## Built-In Mirror Policy
+## Official Mirror Policy
 
-Built-in mirrors must have:
+Official default mirrors must have:
 
 - A public source URL documenting the service.
 - A known rewrite mode.
@@ -76,7 +76,7 @@ Built-in mirrors must have:
 - A conservative default priority.
 - A way for users to disable them.
 
-Do not copy third-party mirror lists verbatim. Built-ins should be curated and documented, not scraped wholesale.
+Do not copy third-party mirror lists verbatim. Official defaults should be curated and documented, not scraped wholesale.
 
 Example metadata:
 
@@ -109,7 +109,7 @@ registries:
         priority: 100
 ```
 
-Users can disable built-ins:
+Users can disable official default mirrors:
 
 ```yaml
 disable_builtin_mirrors: true

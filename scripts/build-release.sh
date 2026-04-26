@@ -38,6 +38,8 @@ for target in "${targets[@]}"; do
   GOOS="${goos}" GOARCH="${goarch}" CGO_ENABLED=0 go build -trimpath -ldflags "${ldflags}" -o "${work}/${bin}" ./cmd/mip
   cp README.md "${work}/"
   cp -R docs "${work}/docs"
+  mkdir -p "${work}/configs"
+  cp configs/mip.yaml "${work}/configs/"
 
   if [[ "${goos}" == "windows" ]]; then
     (cd "${dist}" && zip -qr "${name}.zip" "${name}")
@@ -50,4 +52,3 @@ done
 
 (cd "${dist}" && sha256sum ./* > checksums.txt)
 printf 'release artifacts written to %s\n' "${dist}"
-

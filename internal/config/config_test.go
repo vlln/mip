@@ -79,24 +79,62 @@ func TestProfilesMergeCustomMirrorAndPrefer(t *testing.T) {
 }
 
 func TestProfilesDisableBuiltins(t *testing.T) {
-	cfg := Default()
-	cfg.DisableBuiltinMirrors = true
+	path := writeConfig(t, `
+disable_builtin_mirrors: true
+registries:
+  docker.io:
+    mirrors:
+      - name: company-cache
+        host: registry.example.com/docker.io
+        mode: prefix
+`)
 
-	if profiles := Profiles(cfg); len(profiles) != 0 {
-		t.Fatalf("profiles len = %d, want 0", len(profiles))
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile, ok := FindProfile(Profiles(cfg), "docker.io")
+	if !ok {
+		t.Fatal("missing docker.io profile")
+	}
+	if len(profile.Mirrors) != 1 {
+		t.Fatalf("profile mirrors len = %d, want 1", len(profile.Mirrors))
+	}
+	if profile.Mirrors[0].Name != "company-cache" {
+		t.Fatalf("mirror name = %q, want company-cache", profile.Mirrors[0].Name)
+	}
+}
+
+func TestOfficialConfigCanBeLoadedWithoutDuplicateMirrors(t *testing.T) {
+	cfg, err := Load(filepath.Join("..", "..", "configs", "mip.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	profile, ok := FindProfile(Profiles(cfg), "docker.io")
+	if !ok {
+		t.Fatal("missing docker.io profile")
+	}
+	if len(profile.Mirrors) != 2 {
+		t.Fatalf("docker.io mirrors len = %d, want 2", len(profile.Mirrors))
 	}
 }
 
 func TestProfilesExcludeMirror(t *testing.T) {
 	cfg := Default()
-	cfg.Exclude = []string{"docker.m.daocloud.io"}
+	defaultProfile, ok := FindProfile(Profiles(cfg), "docker.io")
+	if !ok || len(defaultProfile.Mirrors) == 0 {
+		t.Fatal("missing docker.io default mirrors")
+	}
+	excludedHost := defaultProfile.Mirrors[0].Host
+	cfg.Exclude = []string{excludedHost}
 
 	profile, ok := FindProfile(Profiles(cfg), "docker.io")
 	if !ok {
 		t.Fatal("missing docker.io profile")
 	}
 	for _, mirror := range profile.Mirrors {
-		if mirror.Host == "docker.m.daocloud.io" {
+		if mirror.Host == excludedHost {
 			t.Fatal("excluded mirror still present")
 		}
 	}

@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	appconfig "github.com/vlln/mip/internal/config"
 	"github.com/vlln/mip/internal/engine"
 	"github.com/vlln/mip/internal/probe"
 	"github.com/vlln/mip/internal/ref"
-	"github.com/vlln/mip/internal/registry"
 	"github.com/vlln/mip/internal/state"
 )
 
@@ -44,7 +44,7 @@ func TestBuildProbeCandidatesAddsSourceFallback(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got := buildProbeCandidates(registry.Builtins(), state.Store{}, image)
+	got := buildProbeCandidates(appconfig.Profiles(appconfig.Default()), state.Store{}, image)
 	if len(got) != 3 {
 		t.Fatalf("candidate count = %d, want 3", len(got))
 	}

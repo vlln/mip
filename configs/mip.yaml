@@ -1,0 +1,140 @@
+engine: docker
+timeout: 10s
+pull_timeout: 10m
+parallel_probe: 6
+retries: 3
+registries:
+  docker.io:
+    aliases:
+      - index.docker.io
+      - registry-1.docker.io
+    default_namespace: library
+    mirrors:
+      - name: daocloud-docker-host
+        host: docker.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-docker-prefix
+        host: m.daocloud.io/docker.io
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+  ghcr.io:
+    mirrors:
+      - name: daocloud-ghcr-host
+        host: ghcr.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-ghcr-prefix
+        host: m.daocloud.io/ghcr.io
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+  quay.io:
+    mirrors:
+      - name: daocloud-quay-host
+        host: quay.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-quay-prefix
+        host: m.daocloud.io/quay.io
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+  mcr.microsoft.com:
+    mirrors:
+      - name: daocloud-mcr-host
+        host: mcr.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-mcr-prefix
+        host: m.daocloud.io/mcr.microsoft.com
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+  registry.k8s.io:
+    aliases:
+      - k8s.gcr.io
+    mirrors:
+      - name: daocloud-k8s-host
+        host: k8s.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-k8s-prefix
+        host: m.daocloud.io/registry.k8s.io
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+  gcr.io:
+    mirrors:
+      - name: daocloud-gcr-host
+        host: gcr.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-gcr-prefix
+        host: m.daocloud.io/gcr.io
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+  docker.elastic.co:
+    mirrors:
+      - name: daocloud-elastic-host
+        host: elastic.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-elastic-prefix
+        host: m.daocloud.io/docker.elastic.co
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+  nvcr.io:
+    mirrors:
+      - name: daocloud-nvcr-host
+        host: nvcr.m.daocloud.io
+        mode: host-replace
+        priority: 90
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
+      - name: daocloud-nvcr-prefix
+        host: m.daocloud.io/nvcr.io
+        mode: prefix
+        priority: 80
+        source: https://github.com/DaoCloud/public-image-mirror
+        reviewed_at: "2026-04-26"
+        enabled_by_default: true
