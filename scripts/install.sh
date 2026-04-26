@@ -2,7 +2,6 @@
 set -eu
 
 repo="${MIP_REPO:-vlln/mip}"
-version="${MIP_VERSION:-latest}"
 bindir="${MIP_BINDIR:-/usr/local/bin}"
 
 need() {
@@ -52,9 +51,7 @@ case "$arch" in
   *) echo "unsupported architecture: $arch" >&2; exit 1 ;;
 esac
 
-if [ "$version" = "latest" ]; then
-  version="$(resolve_latest_version)"
-fi
+version="$(resolve_latest_version)"
 
 base="https://github.com/${repo}/releases/download/v${version}"
 artifact_version="$version"

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -145,6 +147,25 @@ func TestPullWithFallbackRetriesCandidate(t *testing.T) {
 	}
 	if !outcome.Retagged {
 		t.Fatal("expected retag")
+	}
+}
+
+func TestPrintPullAttempts(t *testing.T) {
+	var out bytes.Buffer
+	printPullAttempts(&out, []pullAttempt{
+		{Image: "mirror.example/library/nginx:1.27", Attempt: 1, Error: "timeout"},
+		{Image: "docker.io/library/nginx:1.27", Attempt: 1},
+	})
+
+	got := out.String()
+	for _, want := range []string{
+		"attempts:\n",
+		"image=mirror.example/library/nginx:1.27 attempt=1 status=failed error=timeout",
+		"image=docker.io/library/nginx:1.27 attempt=1 status=ok",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("output missing %q in:\n%s", want, got)
+		}
 	}
 }
 

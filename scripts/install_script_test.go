@@ -80,7 +80,6 @@ esac
 		"PATH="+fakeBin+string(os.PathListSeparator)+os.Getenv("PATH"),
 		"FAKE_RELEASE_DIR="+releaseDir,
 		"MIP_REPO=example/mip",
-		"MIP_VERSION=latest",
 		"MIP_BINDIR="+binDir,
 	)
 	output, err := cmd.CombinedOutput()

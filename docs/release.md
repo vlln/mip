@@ -36,19 +36,20 @@ Each archive includes:
 
 ## Install Script
 
-The install script downloads a GitHub release archive, checks SHA-256 sums, and installs `mip`. When `MIP_VERSION=latest`, it resolves the latest GitHub release tag before selecting the archive name.
+The install script resolves the latest GitHub release, downloads the matching archive, checks SHA-256 sums, and installs `mip`.
 
 ```bash
-./scripts/install.sh
+curl -fsSL https://raw.githubusercontent.com/vlln/mip/main/scripts/install.sh | sh
 ```
 
 Environment variables:
 
-- `MIP_VERSION`: release version without the leading `v`; defaults to `latest`
 - `MIP_REPO`: GitHub repository, defaults to `vlln/mip`
 - `MIP_BINDIR`: install directory, defaults to `/usr/local/bin`
 
 ## Shell Completion
+
+Shell completion lets the user's shell suggest `mip` commands, flags, and subcommands when Tab is pressed.
 
 ```bash
 mip completion bash
@@ -88,4 +89,8 @@ mip version --json
 - `go test ./...`
 - `make build VERSION=ci`
 - smoke tests for `version` and `rewrite`
-- release archive dry-run for `v*` tags
+- GitHub Release publishing for `v*` tags
+- Homebrew formula updates in `vlln/homebrew-tap` for `v*` tags
+
+The Homebrew tap update expects a repository secret named `HOMEBREW_TAP_TOKEN`
+or `HOMEBREW` with write access to `vlln/homebrew-tap`.

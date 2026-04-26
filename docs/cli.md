@@ -147,8 +147,13 @@ Default human output should be compact:
 ```text
 image: docker.io/library/nginx:1.27
 selected: dockerproxy.cool/library/nginx:1.27
+mirror: dockerproxy.cool
 engine: docker
 status: pulled
+retagged: true
+local: docker.io/library/nginx:1.27
+digest: sha256:...
+verified: true
 elapsed: 8.2s
 ```
 

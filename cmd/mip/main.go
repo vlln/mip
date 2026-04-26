@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -262,7 +263,7 @@ func runPull(args []string) int {
 		return exitGeneralError
 	}
 	if fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: mip pull IMAGE [--engine docker|podman|nerdctl] [--dry-run] [--platform PLATFORM] [--retries N] [--no-verify-digest] [--json]")
+		fmt.Fprintln(os.Stderr, "usage: mip pull IMAGE [--engine docker|podman|nerdctl] [--dry-run] [--platform PLATFORM] [--retries N] [--no-retag] [--no-verify-digest] [--json]")
 		return exitGeneralError
 	}
 	if *retries < 1 {
@@ -341,6 +342,13 @@ func runPull(args []string) int {
 				"attempts":   pullResult.Attempts,
 				"elapsed_ms": elapsed,
 			})
+		} else {
+			fmt.Fprintf(os.Stdout, "image: %s\n", image.String())
+			fmt.Fprintf(os.Stdout, "selected: %s\n", selected.Image)
+			fmt.Fprintf(os.Stdout, "engine: %s\n", runner.Name())
+			fmt.Fprintln(os.Stdout, "status: pull_failed")
+			printPullAttempts(os.Stdout, pullResult.Attempts)
+			fmt.Fprintf(os.Stdout, "elapsed: %.1fs\n", float64(elapsed)/1000)
 		}
 		return pullCode
 	}
@@ -365,8 +373,13 @@ func runPull(args []string) int {
 
 	fmt.Fprintf(os.Stdout, "image: %s\n", image.String())
 	fmt.Fprintf(os.Stdout, "selected: %s\n", selected.Image)
+	fmt.Fprintf(os.Stdout, "mirror: %s\n", selected.Mirror)
 	fmt.Fprintf(os.Stdout, "engine: %s\n", runner.Name())
 	fmt.Fprintln(os.Stdout, "status: pulled")
+	fmt.Fprintf(os.Stdout, "retagged: %t\n", pullResult.Retagged)
+	if pullResult.Retagged {
+		fmt.Fprintf(os.Stdout, "local: %s\n", image.String())
+	}
 	if selected.Digest != "" {
 		fmt.Fprintf(os.Stdout, "digest: %s\n", selected.Digest)
 		if selected.IndexDigest != "" && selected.IndexDigest != selected.Digest {
@@ -376,6 +389,20 @@ func runPull(args []string) int {
 	}
 	fmt.Fprintf(os.Stdout, "elapsed: %.1fs\n", float64(elapsed)/1000)
 	return exitOK
+}
+
+func printPullAttempts(out io.Writer, attempts []pullAttempt) {
+	if len(attempts) == 0 {
+		return
+	}
+	fmt.Fprintln(out, "attempts:")
+	for _, attempt := range attempts {
+		if attempt.Error == "" {
+			fmt.Fprintf(out, "  - image=%s attempt=%d status=ok\n", attempt.Image, attempt.Attempt)
+			continue
+		}
+		fmt.Fprintf(out, "  - image=%s attempt=%d status=failed error=%s\n", attempt.Image, attempt.Attempt, attempt.Error)
+	}
 }
 
 type pullOptions struct {
@@ -720,7 +747,7 @@ Usage:
   mip IMAGE
   mip version [--json]
   mip completion bash|zsh|fish
-  mip pull IMAGE [--engine docker|podman|nerdctl] [--dry-run] [--platform PLATFORM] [--retries N] [--no-verify-digest] [--json]
+  mip pull IMAGE [--engine docker|podman|nerdctl] [--dry-run] [--platform PLATFORM] [--retries N] [--no-retag] [--no-verify-digest] [--json]
   mip rewrite IMAGE [--all] [--plain] [--json]
   mip probe IMAGE [--platform PLATFORM] [--timeout DURATION] [--concurrency N] [--json]
   mip mirrors list [--registry REGISTRY] [--json]
