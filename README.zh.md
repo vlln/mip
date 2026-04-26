@@ -80,7 +80,8 @@ curl -fsSL https://raw.githubusercontent.com/vlln/mip/main/scripts/install.sh | 
 mip version
 ```
 
-设置 `MIP_BINDIR` 可以安装到 `/usr/local/bin` 之外的位置。
+默认会优先安装到 `/usr/local/bin`，不可写时安装到 `$HOME/.local/bin`。
+设置 `MIP_BINDIR` 可以指定其他安装目录。
 
 ## 配置
 

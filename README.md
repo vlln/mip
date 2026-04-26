@@ -95,7 +95,8 @@ curl -fsSL https://raw.githubusercontent.com/vlln/mip/main/scripts/install.sh | 
 mip version
 ```
 
-Set `MIP_BINDIR` to install somewhere other than `/usr/local/bin`.
+By default the script installs to `/usr/local/bin` when writable, otherwise to
+`$HOME/.local/bin`. Set `MIP_BINDIR` to choose another directory.
 
 ## Configure
 

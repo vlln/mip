@@ -2,7 +2,7 @@
 set -eu
 
 repo="${MIP_REPO:-vlln/mip}"
-bindir="${MIP_BINDIR:-/usr/local/bin}"
+default_bindir="${MIP_DEFAULT_BINDIR:-/usr/local/bin}"
 
 need() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -16,6 +16,8 @@ need tar
 need sha256sum
 need mktemp
 need sed
+need install
+need dirname
 
 if command -v curl >/dev/null 2>&1; then
   fetch='curl -fsSL'
@@ -36,6 +38,34 @@ resolve_latest_version() {
   printf '%s\n' "$tag"
 }
 
+choose_bindir() {
+  if [ -n "${MIP_BINDIR:-}" ]; then
+    printf '%s\n' "$MIP_BINDIR"
+    return
+  fi
+
+  if [ -d "$default_bindir" ] && [ -w "$default_bindir" ]; then
+    printf '%s\n' "$default_bindir"
+    return
+  fi
+
+  if [ ! -d "$default_bindir" ]; then
+    parent="$(dirname "$default_bindir")"
+    if [ -d "$parent" ] && [ -w "$parent" ]; then
+      printf '%s\n' "$default_bindir"
+      return
+    fi
+  fi
+
+  if [ -z "${HOME:-}" ]; then
+    echo "default install directory ${default_bindir} is not writable and HOME is not set" >&2
+    echo "set MIP_BINDIR to a writable directory and retry" >&2
+    exit 1
+  fi
+
+  printf '%s\n' "${HOME}/.local/bin"
+}
+
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"
 
@@ -52,6 +82,7 @@ case "$arch" in
 esac
 
 version="$(resolve_latest_version)"
+bindir="$(choose_bindir)"
 
 base="https://github.com/${repo}/releases/download/v${version}"
 artifact_version="$version"
@@ -70,4 +101,8 @@ tar -xzf "${tmp}/${archive}" -C "$tmp"
 mkdir -p "$bindir"
 install -m 0755 "${tmp}/${name}/mip" "${bindir}/mip"
 echo "installed ${bindir}/mip"
+case ":${PATH:-}:" in
+  *":${bindir}:"*) ;;
+  *) echo "note: ${bindir} is not in PATH; add it before running mip directly" >&2 ;;
+esac
 "${bindir}/mip" version

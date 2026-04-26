@@ -45,7 +45,8 @@ curl -fsSL https://raw.githubusercontent.com/vlln/mip/main/scripts/install.sh | 
 Environment variables:
 
 - `MIP_REPO`: GitHub repository, defaults to `vlln/mip`
-- `MIP_BINDIR`: install directory, defaults to `/usr/local/bin`
+- `MIP_BINDIR`: install directory. When unset, the script uses `/usr/local/bin`
+  if writable, otherwise `$HOME/.local/bin`.
 
 ## Shell Completion
 
