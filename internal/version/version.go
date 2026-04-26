@@ -27,4 +27,3 @@ func Get() Info {
 		Arch:    runtime.GOARCH,
 	}
 }
-

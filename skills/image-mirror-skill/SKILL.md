@@ -1,5 +1,5 @@
 ---
-name: image-mirror
+name: image-mirror-skill
 description: Use the mip CLI to accelerate and troubleshoot Docker/OCI image pulls with registry-aware mirror rewrite, probe, pull, and configuration workflows.
 license: MIT
 metadata:
@@ -15,7 +15,7 @@ metadata:
       - registry
 ---
 
-# Image Mirror
+# Image Mirror Skill
 
 Use this skill to help users accelerate container image pulls through registry-aware mirrors with the `mip` CLI.
 

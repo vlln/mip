@@ -2,8 +2,6 @@
 
 `mip` is a registry-aware CLI for accelerating container image pulls through configurable mirrors.
 
-This is a new implementation. The `DockerPullSmart/` and `docker_mirror/` directories are third-party reference repositories kept for research only.
-
 ## Current Status
 
 Implemented:
@@ -127,14 +125,14 @@ by skills-compatible agents.
 
 | Skill | Description |
 |-------|-------------|
-| [`image-mirror`](skills/image-mirror) | Accelerate and troubleshoot Docker/OCI image pulls with mip mirror workflows. |
+| [`image-mirror-skill`](skills/image-mirror-skill) | Accelerate and troubleshoot Docker/OCI image pulls with mip mirror workflows. |
 
 ### Skill Quick Start
 
 Paste this into your AI agent:
 
 ```text
-Install the Agent Skills from https://raw.githubusercontent.com/vlln/image-mirror-skill/main/README.md
+Install the Agent Skills from https://raw.githubusercontent.com/vlln/mip/main/README.md
 ```
 
 ### Skill Installation
@@ -153,16 +151,16 @@ For other platforms, see the
 Install this skill from the published repository:
 
 ```sh
-skit install --global vlln/image-mirror-skill/skills/image-mirror
+skit install --global vlln/mip/skills/image-mirror-skill
 ```
 
 Install all skills in this repository:
 
 ```sh
-skit install --global vlln/image-mirror-skill --all
+skit install --global vlln/mip --all
 ```
 
-Manual install: copy [skills/image-mirror/](skills/image-mirror/) into your
+Manual install: copy [skills/image-mirror-skill/](skills/image-mirror-skill/) into your
 agent's skills directory.
 
 The root project remains the `mip` CLI; the skill is an additional agent-facing
@@ -176,6 +174,4 @@ guide for using and maintaining it.
 
 ## License
 
-MIT for the new `mip` code and `skills/image-mirror`. Third-party reference
-repositories under `DockerPullSmart/` and `docker_mirror/` retain their own
-licenses.
+MIT for the `mip` code and `skills/image-mirror-skill`.
