@@ -62,7 +62,7 @@ The official default config in `configs/mip.yaml` currently covers:
 Official default mirrors must have:
 
 - A host that works with automatic rewrite-mode inference.
-- No known login, intranet-only, rate-limit, or other access restriction tag in
+- No known intranet-only, hard rate-limit, or incompatible access restriction in
   the reference data used for curation.
 - The same image-reference rewrite semantics as `mip`.
 
@@ -71,10 +71,12 @@ and documented, not scraped wholesale. Docker daemon `registry-mirrors` can be a
 useful signal, but a daemon mirror URL is not enough by itself because `mip`
 rewrites image references directly.
 
-Mirrors marked as login-required are excluded from the official config. `mip`
-currently supports anonymous bearer-token challenges during manifest probing, but
-it does not read Docker credential stores or send username/password credentials
-to third-party mirrors.
+Mirrors that return `401` are kept as authentication-required candidates when
+they otherwise match the registry rewrite model. `mip probe` reports them as
+warnings because users can make them usable through the selected engine, for
+example `docker login gcr.m.daocloud.io`. `mip` currently supports anonymous
+bearer-token challenges during manifest probing, but it does not read Docker
+credential stores or send username/password credentials to third-party mirrors.
 
 Example mirror entry:
 
@@ -111,14 +113,15 @@ Candidates should be filtered before scoring:
 - Excluded by user config.
 - Unsupported rewrite mode.
 - Registry mismatch.
-- Requires authentication and no credentials are available.
+- Authentication required and no engine credentials are available: warn, keep as
+  a pull candidate, and let the engine decide.
 - Known recent hard failure in local state.
 
 HTTP status handling:
 
 ```text
 200/307  usable
-401      usable only if token flow succeeds or credentials exist
+401      warn as auth-required; usable by pull if the engine is logged in
 403      reject unless explicitly allowed
 404      reject
 429      penalize or reject depending on retry-after

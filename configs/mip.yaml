@@ -5,6 +5,7 @@ registries:
       - registry-1.docker.io
     default_namespace: library
     mirrors:
+      - docker.m.daocloud.io
       - dockerproxy.cool
       - docker.kejilion.pro
       - hub.1panel.dev
@@ -20,6 +21,7 @@ registries:
       - m.daocloud.io/ghcr.io
   quay.io:
     mirrors:
+      - quay.m.daocloud.io
       - quay.dockerproxy.net
       - m.daocloud.io/quay.io
   mcr.microsoft.com:
@@ -30,6 +32,7 @@ registries:
     aliases:
       - k8s.gcr.io
     mirrors:
+      - k8s.m.daocloud.io
       - m.daocloud.io/registry.k8s.io
   k8s.gcr.io:
     mirrors:
@@ -37,6 +40,7 @@ registries:
       - m.daocloud.io/k8s.gcr.io
   gcr.io:
     mirrors:
+      - gcr.m.daocloud.io
       - gcr.dockerproxy.net
       - m.daocloud.io/gcr.io
   dhi.io:
@@ -45,6 +49,7 @@ registries:
       - m.daocloud.io/dhi.io
   docker.elastic.co:
     mirrors:
+      - elastic.m.daocloud.io
       - m.daocloud.io/docker.elastic.co
   nvcr.io:
     mirrors:

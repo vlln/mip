@@ -178,7 +178,5 @@ JSON output:
 4  engine unavailable
 5  pull failed
 6  digest verification failed
-7  authentication required
-8  network timeout
 9  configuration error
 ```

@@ -96,7 +96,7 @@ func (s Store) Record(results []probe.Result) Store {
 		health.UpdatedAt = now
 		if result.OK {
 			health.Successes++
-		} else {
+		} else if !result.AuthRequired {
 			health.Failures++
 		}
 		s.Mirrors[result.Image] = health

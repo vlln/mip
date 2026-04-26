@@ -479,7 +479,7 @@ var retrySleep = time.Sleep
 func successfulResults(results []probe.Result) []probe.Result {
 	successful := make([]probe.Result, 0, len(results))
 	for _, result := range results {
-		if result.OK {
+		if result.OK || result.AuthRequired {
 			successful = append(successful, result)
 		}
 	}
@@ -496,6 +496,11 @@ func selectCandidate(ctx context.Context, profiles []registry.Profile, store sta
 	sortProbeResults(results)
 	for _, result := range results {
 		if result.OK {
+			return result, results, exitOK
+		}
+	}
+	for _, result := range results {
+		if result.AuthRequired {
 			return result, results, exitOK
 		}
 	}
@@ -550,6 +555,8 @@ func printProbeResults(results []probe.Result) {
 		status := "fail"
 		if result.OK {
 			status = "ok"
+		} else if result.AuthRequired {
+			status = "warn"
 		}
 		fmt.Fprintf(os.Stdout, "%s %s %dms", status, result.Image, result.LatencyMS)
 		if result.StatusCode != 0 {
@@ -564,6 +571,9 @@ func printProbeResults(results []probe.Result) {
 		if result.Error != "" {
 			fmt.Fprintf(os.Stdout, " error=%q", result.Error)
 		}
+		if result.Warning != "" {
+			fmt.Fprintf(os.Stdout, " warning=%q", result.Warning)
+		}
 		fmt.Fprintln(os.Stdout)
 	}
 }
@@ -572,6 +582,9 @@ func sortProbeResults(results []probe.Result) {
 	sort.SliceStable(results, func(i, j int) bool {
 		if results[i].OK != results[j].OK {
 			return results[i].OK
+		}
+		if results[i].AuthRequired != results[j].AuthRequired {
+			return results[i].AuthRequired
 		}
 		if isSourceResult(results[i]) != isSourceResult(results[j]) {
 			return !isSourceResult(results[i])

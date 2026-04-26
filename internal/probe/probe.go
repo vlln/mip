@@ -16,17 +16,19 @@ import (
 )
 
 type Result struct {
-	Image       string `json:"image"`
-	Mirror      string `json:"mirror,omitempty"`
-	OK          bool   `json:"ok"`
-	StatusCode  int    `json:"status_code,omitempty"`
-	LatencyMS   int64  `json:"latency_ms"`
-	Error       string `json:"error,omitempty"`
-	Digest      string `json:"digest,omitempty"`
-	IndexDigest string `json:"index_digest,omitempty"`
-	MediaType   string `json:"media_type,omitempty"`
-	Platform    string `json:"platform,omitempty"`
-	PlatformHit bool   `json:"platform_hit,omitempty"`
+	Image        string `json:"image"`
+	Mirror       string `json:"mirror,omitempty"`
+	OK           bool   `json:"ok"`
+	AuthRequired bool   `json:"auth_required,omitempty"`
+	StatusCode   int    `json:"status_code,omitempty"`
+	LatencyMS    int64  `json:"latency_ms"`
+	Warning      string `json:"warning,omitempty"`
+	Error        string `json:"error,omitempty"`
+	Digest       string `json:"digest,omitempty"`
+	IndexDigest  string `json:"index_digest,omitempty"`
+	MediaType    string `json:"media_type,omitempty"`
+	Platform     string `json:"platform,omitempty"`
+	PlatformHit  bool   `json:"platform_hit,omitempty"`
 }
 
 type Options struct {
@@ -87,8 +89,13 @@ func Image(ctx context.Context, client *http.Client, image string, mirrorName st
 	manifestURL := manifestURL(parsed)
 	manifest, err := requestManifest(ctx, client, manifestURL)
 	if err != nil {
-		result.Error = err.Error()
 		result.StatusCode = manifest.StatusCode
+		if manifest.StatusCode == http.StatusUnauthorized {
+			result.AuthRequired = true
+			result.Warning = "authentication required; run docker login " + parsed.Registry
+		} else {
+			result.Error = err.Error()
+		}
 		result.LatencyMS = elapsedMS(start)
 		return result
 	}

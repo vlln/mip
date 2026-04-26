@@ -73,6 +73,26 @@ func TestSortProbeResultsKeepsSourceAfterMirrors(t *testing.T) {
 	}
 }
 
+func TestSortProbeResultsKeepsAuthWarningsPullable(t *testing.T) {
+	results := []probe.Result{
+		{Image: "bad.example/library/nginx:1.27", Mirror: "bad", StatusCode: 500, LatencyMS: 10, Error: "HTTP 500"},
+		{Image: "login.example/library/nginx:1.27", Mirror: "login", AuthRequired: true, StatusCode: 401, LatencyMS: 50},
+		{Image: "ok.example/library/nginx:1.27", Mirror: "ok", OK: true, StatusCode: 200, LatencyMS: 100},
+	}
+
+	sortProbeResults(results)
+
+	if results[0].Mirror != "ok" {
+		t.Fatalf("first mirror = %q, want ok", results[0].Mirror)
+	}
+	if results[1].Mirror != "login" {
+		t.Fatalf("second mirror = %q, want login", results[1].Mirror)
+	}
+	if len(successfulResults(results)) != 2 {
+		t.Fatal("expected ok and auth-required results to be pull candidates")
+	}
+}
+
 func TestPullWithFallbackUsesNextCandidate(t *testing.T) {
 	runner := &fakeEngine{
 		pullErrors: map[string][]error{

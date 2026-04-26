@@ -13,6 +13,7 @@ func TestRecordUpdatesMirrorHealth(t *testing.T) {
 	store = store.Record([]probe.Result{
 		{Image: "mirror.example/library/nginx:latest", Mirror: "example", OK: true, StatusCode: 200, LatencyMS: 123, Digest: "sha256:abc"},
 		{Image: "bad.example/library/nginx:latest", Mirror: "bad", OK: false, StatusCode: 500, LatencyMS: 456, Error: "HTTP 500"},
+		{Image: "login.example/library/nginx:latest", Mirror: "login", AuthRequired: true, StatusCode: 401, LatencyMS: 300, Warning: "authentication required"},
 	})
 
 	okHealth := store.Mirrors["mirror.example/library/nginx:latest"]
@@ -23,6 +24,11 @@ func TestRecordUpdatesMirrorHealth(t *testing.T) {
 	badHealth := store.Mirrors["bad.example/library/nginx:latest"]
 	if badHealth.Successes != 0 || badHealth.Failures != 1 || badHealth.LastOK {
 		t.Fatalf("unexpected bad health: %+v", badHealth)
+	}
+
+	loginHealth := store.Mirrors["login.example/library/nginx:latest"]
+	if loginHealth.Successes != 0 || loginHealth.Failures != 0 || loginHealth.LastStatusCode != 401 {
+		t.Fatalf("unexpected login-required health: %+v", loginHealth)
 	}
 }
 
