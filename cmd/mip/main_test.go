@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -13,7 +15,37 @@ import (
 	"github.com/vlln/mip/internal/probe"
 	"github.com/vlln/mip/internal/ref"
 	"github.com/vlln/mip/internal/state"
+	"github.com/vlln/mip/internal/version"
 )
+
+func TestVersionOutputIsConciseByDefault(t *testing.T) {
+	output := captureStdout(t, func() int {
+		return runVersion(nil)
+	})
+
+	if output != "mip "+version.Version+"\n" {
+		t.Fatalf("version output = %q", output)
+	}
+	if strings.Contains(output, "go:") {
+		t.Fatalf("default version output should not include Go runtime: %q", output)
+	}
+}
+
+func TestVersionJSONIncludesBuildDetails(t *testing.T) {
+	output := captureStdout(t, func() int {
+		return runVersion([]string{"--json"})
+	})
+
+	var got map[string]any
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("version JSON is invalid: %v\n%s", err, output)
+	}
+	for _, key := range []string{"version", "commit", "date", "go", "os", "arch"} {
+		if _, ok := got[key]; !ok {
+			t.Fatalf("version JSON missing %q: %#v", key, got)
+		}
+	}
+}
 
 func TestHasAnyDigest(t *testing.T) {
 	repoDigests := []string{
@@ -167,6 +199,35 @@ func TestPrintPullAttempts(t *testing.T) {
 			t.Fatalf("output missing %q in:\n%s", want, got)
 		}
 	}
+}
+
+func captureStdout(t *testing.T, run func() int) string {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stdout = writer
+
+	code := run()
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	os.Stdout = oldStdout
+
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(reader); err != nil {
+		t.Fatal(err)
+	}
+	if err := reader.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d", code, exitOK)
+	}
+	return out.String()
 }
 
 type fakeEngine struct {

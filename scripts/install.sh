@@ -105,4 +105,3 @@ case ":${PATH:-}:" in
   *":${bindir}:"*) ;;
   *) echo "note: ${bindir} is not in PATH; add it before running mip directly" >&2 ;;
 esac
-"${bindir}/mip" version

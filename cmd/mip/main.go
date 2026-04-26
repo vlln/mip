@@ -82,10 +82,6 @@ func runVersion(args []string) int {
 		return exitOK
 	}
 	fmt.Fprintf(os.Stdout, "mip %s\n", info.Version)
-	fmt.Fprintf(os.Stdout, "commit: %s\n", info.Commit)
-	fmt.Fprintf(os.Stdout, "date: %s\n", info.Date)
-	fmt.Fprintf(os.Stdout, "go: %s\n", info.Go)
-	fmt.Fprintf(os.Stdout, "platform: %s/%s\n", info.OS, info.Arch)
 	return exitOK
 }
 

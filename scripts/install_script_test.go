@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -29,6 +30,9 @@ func TestInstallScriptResolvesLatestReleaseAsset(t *testing.T) {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("install script failed: %s: %v", output, err)
+	}
+	if strings.Contains(string(output), "mip 1.2.3") {
+		t.Fatalf("install script should not run mip version automatically:\n%s", output)
 	}
 	if _, err := os.Stat(filepath.Join(binDir, "mip")); err != nil {
 		t.Fatalf("installed mip missing: %v", err)
