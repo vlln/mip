@@ -42,7 +42,8 @@ mip pull ghcr.io/org/app:v1 --dry-run
 Scriptable rewrite:
 
 ```bash
-mip rewrite nginx:1.27 --best --plain
+mip rewrite nginx:1.27 --plain
+mip rewrite nginx:1.27 --all --plain
 ```
 
 Machine-readable output:
@@ -51,19 +52,13 @@ Machine-readable output:
 mip pull nginx:1.27 --json
 ```
 
-## Global Flags
+## Common Flags
 
 ```text
 --config PATH        Load a specific config file
---engine NAME        docker, podman, or nerdctl
 --timeout DURATION   Per network probe timeout
---pull-timeout DURATION
---retries N
 --platform PLATFORM  Example: linux/amd64
 --json               Emit JSON result
---quiet              Suppress progress output
---verbose            Include candidate and decision details
---no-color           Disable ANSI color
 ```
 
 `--config` may be placed before or after the image argument.
@@ -80,11 +75,14 @@ Important flags:
 
 ```text
 --dry-run            Show candidate plan without pulling
---verify-digest      Verify digest when the source digest is known
+--engine NAME        docker, podman, or nerdctl
+--platform PLATFORM  Platform passed to probe and pull
+--timeout DURATION   Per candidate probe timeout
+--pull-timeout DURATION
+--concurrency N      Maximum concurrent probes
+--json               Emit JSON result
 --no-retag           Keep the mirrored image name locally
---prefer HOST        Prefer a mirror host, repeatable
---exclude HOST       Exclude a mirror host, repeatable
---max-candidates N   Limit pull attempts after probing
+--no-verify-digest   Skip digest verification after pull
 ```
 
 Default behavior:
@@ -92,7 +90,7 @@ Default behavior:
 1. Normalize `IMAGE`.
 2. Generate candidate mirror image references.
 3. Probe candidates concurrently.
-4. Pull the highest-ranked candidate.
+4. Pull the fastest reachable candidate.
 5. Retag to the original normalized image name if needed.
 6. Remove the temporary mirror tag unless `--no-retag` is set.
 
@@ -103,7 +101,8 @@ Print rewritten image references without pulling.
 ```bash
 mip rewrite IMAGE
 mip rewrite IMAGE --all
-mip rewrite IMAGE --best --plain
+mip rewrite IMAGE --plain
+mip rewrite IMAGE --all --plain
 ```
 
 ## `probe`

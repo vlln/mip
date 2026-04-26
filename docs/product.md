@@ -19,7 +19,7 @@ The tool should:
 - Normalize the reference into a canonical registry/repository/tag or digest form.
 - Generate registry-specific mirror candidates.
 - Probe candidates before attempting a full pull.
-- Select, retry, and fall back automatically.
+- Select the best reachable candidate before pulling.
 - Pull with Docker, Podman, or nerdctl.
 - Retag the result back to the original image name when needed.
 - Provide scriptable output and predictable exit codes.
@@ -53,4 +53,3 @@ The tool should:
 ## Production Guidance
 
 Public mirrors should be treated as convenience infrastructure. For production workloads, prefer syncing images into a trusted private registry and pulling by digest.
-
