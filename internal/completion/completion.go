@@ -39,7 +39,7 @@ _mip_completion() {
   esac
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY=( $(compgen -W "--config --json --dry-run --no-retag --no-verify-digest --engine --platform --timeout --pull-timeout --concurrency --all --plain --registry" -- "$cur") )
+    COMPREPLY=( $(compgen -W "--config --json --dry-run --no-retag --no-verify-digest --engine --platform --timeout --pull-timeout --concurrency --retries --all --plain --registry" -- "$cur") )
     return 0
   fi
 
@@ -75,6 +75,7 @@ _mip() {
     '--timeout[probe timeout]' \
     '--pull-timeout[pull timeout]' \
     '--concurrency[probe concurrency]' \
+    '--retries[pull attempts per candidate]' \
     '--all[all candidates]' \
     '--plain[plain output]' \
     '--registry[registry]:(docker.io ghcr.io quay.io mcr.microsoft.com registry.k8s.io gcr.io docker.elastic.co nvcr.io)' \
@@ -100,6 +101,7 @@ complete -c mip -l platform -r -a 'linux/amd64 linux/arm64 linux/arm/v7 linux/ar
 complete -c mip -l timeout -r -d 'probe timeout'
 complete -c mip -l pull-timeout -r -d 'pull timeout'
 complete -c mip -l concurrency -r -d 'probe concurrency'
+complete -c mip -l retries -r -d 'pull attempts per candidate'
 complete -c mip -l all -d 'all candidates'
 complete -c mip -l plain -d 'plain output'
 complete -c mip -l registry -r -a 'docker.io ghcr.io quay.io mcr.microsoft.com registry.k8s.io gcr.io docker.elastic.co nvcr.io'

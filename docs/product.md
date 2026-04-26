@@ -20,6 +20,7 @@ The tool should:
 - Generate registry-specific mirror candidates.
 - Probe candidates before attempting a full pull.
 - Select the best reachable candidate before pulling.
+- Retry pull attempts and fall back to the next reachable candidate, ending with the source registry as a final candidate.
 - Pull with Docker, Podman, or nerdctl.
 - Retag the result back to the original image name when needed.
 - Provide scriptable output and predictable exit codes.

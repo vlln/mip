@@ -16,6 +16,7 @@ need uname
 need tar
 need sha256sum
 need mktemp
+need sed
 
 if command -v curl >/dev/null 2>&1; then
   fetch='curl -fsSL'

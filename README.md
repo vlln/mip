@@ -54,7 +54,7 @@ mip rewrite nginx:1.27 --all
 mip probe nginx:1.27 --timeout 8s
 mip probe hello-world:latest --platform linux/amd64 --json
 mip pull hello-world:latest --timeout 8s
-mip pull hello-world:latest --platform linux/amd64
+mip pull hello-world:latest --platform linux/amd64 --retries 2
 mip pull hello-world:latest --engine podman --dry-run
 mip mirrors list --registry registry.k8s.io
 mip config show
@@ -97,6 +97,7 @@ engine: docker
 timeout: 8s
 pull_timeout: 10m
 parallel_probe: 6
+retries: 3
 prefer:
   - company-cache
 exclude:

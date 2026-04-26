@@ -80,6 +80,7 @@ Important flags:
 --timeout DURATION   Per candidate probe timeout
 --pull-timeout DURATION
 --concurrency N      Maximum concurrent probes
+--retries N          Pull attempts per candidate
 --json               Emit JSON result
 --no-retag           Keep the mirrored image name locally
 --no-verify-digest   Skip digest verification after pull
@@ -89,10 +90,12 @@ Default behavior:
 
 1. Normalize `IMAGE`.
 2. Generate candidate mirror image references.
-3. Probe candidates concurrently.
-4. Pull the fastest reachable candidate.
-5. Retag to the original normalized image name if needed.
-6. Remove the temporary mirror tag unless `--no-retag` is set.
+3. Add the source registry as the final fallback candidate.
+4. Probe candidates concurrently.
+5. Pull the fastest reachable candidate.
+6. Retry failed pulls according to `--retries`, then fall back to the next reachable candidate.
+7. Retag to the original normalized image name if needed.
+8. Remove the temporary mirror tag unless `--no-retag` is set.
 
 ## `rewrite`
 
