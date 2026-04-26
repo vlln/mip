@@ -1,11 +1,5 @@
 package registry
 
-import (
-	"fmt"
-
-	"gopkg.in/yaml.v3"
-)
-
 type RewriteMode string
 
 const (
@@ -25,21 +19,6 @@ type Profile struct {
 	Aliases          []string `json:"aliases,omitempty" yaml:"aliases,omitempty"`
 	DefaultNamespace string   `json:"default_namespace,omitempty" yaml:"default_namespace,omitempty"`
 	Mirrors          []Mirror `json:"mirrors" yaml:"mirrors"`
-}
-
-func (m *Mirror) UnmarshalYAML(value *yaml.Node) error {
-	if value.Kind == yaml.ScalarNode {
-		m.Host = value.Value
-		return nil
-	}
-
-	type mirror Mirror
-	var decoded mirror
-	if err := value.Decode(&decoded); err != nil {
-		return fmt.Errorf("parse mirror: %w", err)
-	}
-	*m = Mirror(decoded)
-	return nil
 }
 
 func FindProfile(profiles []Profile, registryName string) (Profile, bool) {

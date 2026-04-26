@@ -10,20 +10,12 @@ import (
 
 func TestLoadConfigFile(t *testing.T) {
 	path := writeConfig(t, `
-engine: podman
-timeout: 2s
-pull_timeout: 3m
-parallel_probe: 2
-retries: 4
 prefer:
   - company-cache
 registries:
   docker.io:
     mirrors:
-      - name: company-cache
-        host: registry.example.com/docker.io
-        mode: prefix
-        priority: 100
+      - registry.example.com/docker.io
 `)
 
 	cfg, err := Load(path)
@@ -31,20 +23,29 @@ registries:
 		t.Fatal(err)
 	}
 
-	if cfg.Engine != "podman" {
+	if cfg.Engine != "docker" {
 		t.Fatalf("engine = %q", cfg.Engine)
 	}
-	if cfg.Timeout.String() != "2s" {
-		t.Fatalf("timeout = %s", cfg.Timeout)
+	if cfg.Prefer[0] != "company-cache" {
+		t.Fatalf("prefer = %#v", cfg.Prefer)
 	}
-	if cfg.PullTimeout.String() != "3m0s" {
-		t.Fatalf("pull_timeout = %s", cfg.PullTimeout)
+	if got := cfg.Registries["docker.io"].Mirrors[0]; got != "registry.example.com/docker.io" {
+		t.Fatalf("mirror = %q", got)
 	}
-	if cfg.ParallelProbe != 2 {
-		t.Fatalf("parallel_probe = %d", cfg.ParallelProbe)
-	}
-	if cfg.Retries != 4 {
-		t.Fatalf("retries = %d", cfg.Retries)
+}
+
+func TestLoadRejectsOldConfigFields(t *testing.T) {
+	path := writeConfig(t, `
+timeout: 2s
+registries:
+  docker.io:
+    mirrors:
+      - name: company-cache
+        host: registry.example.com/docker.io
+`)
+
+	if _, err := Load(path); err == nil {
+		t.Fatal("expected old config fields to be rejected")
 	}
 }
 
@@ -61,7 +62,7 @@ registries:
 		t.Fatal(err)
 	}
 	if _, ok := FindProfile(Profiles(cfg), "ghcr.io"); ok {
-		t.Fatal("official ghcr.io profile should not be merged into user config")
+		t.Fatal("user config should replace the official config")
 	}
 
 	profile, ok := FindProfile(Profiles(cfg), "docker.io")
@@ -81,16 +82,14 @@ func TestProfilesPreferMirror(t *testing.T) {
 		Prefer: []string{"company-cache"},
 		Registries: map[string]RegistryOverride{
 			"docker.io": {
-				Mirrors: []registry.Mirror{
-					{Name: "company-cache", Host: "registry.example.com/docker.io", Mode: registry.Prefix, Priority: 100},
-				},
+				Mirrors: []string{"company-cache"},
 			},
 		},
 	}
 
 	profile, _ := FindProfile(Profiles(cfg), "docker.io")
-	if got := profile.Mirrors[0].Priority; got != 1100 {
-		t.Fatalf("preferred mirror priority = %d, want 1100", got)
+	if got := profile.Mirrors[0].Priority; got != 2000 {
+		t.Fatalf("preferred mirror priority = %d, want 2000", got)
 	}
 }
 

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -29,25 +30,20 @@ type Config struct {
 }
 
 type RegistryOverride struct {
-	Aliases          []string          `json:"aliases,omitempty" yaml:"aliases"`
-	DefaultNamespace string            `json:"default_namespace,omitempty" yaml:"default_namespace"`
-	Mirrors          []registry.Mirror `json:"mirrors,omitempty" yaml:"mirrors"`
+	Aliases          []string `json:"aliases,omitempty" yaml:"aliases"`
+	DefaultNamespace string   `json:"default_namespace,omitempty" yaml:"default_namespace"`
+	Mirrors          []string `json:"mirrors,omitempty" yaml:"mirrors"`
 }
 
 type fileConfig struct {
-	Engine        string                      `yaml:"engine"`
-	Timeout       string                      `yaml:"timeout"`
-	PullTimeout   string                      `yaml:"pull_timeout"`
-	ParallelProbe int                         `yaml:"parallel_probe"`
-	Retries       int                         `yaml:"retries"`
-	Prefer        []string                    `yaml:"prefer"`
-	Exclude       []string                    `yaml:"exclude"`
-	Registries    map[string]RegistryOverride `yaml:"registries"`
+	Prefer     []string                    `yaml:"prefer"`
+	Exclude    []string                    `yaml:"exclude"`
+	Registries map[string]RegistryOverride `yaml:"registries"`
 }
 
 func Default() Config {
 	cfg := defaultBase()
-	if err := mergeYAML(&cfg, configs.Official, "official config"); err != nil {
+	if err := applyYAML(&cfg, configs.Official, "official config"); err != nil {
 		panic(err)
 	}
 	return cfg
@@ -79,7 +75,7 @@ func Load(path string) (Config, error) {
 	}
 
 	cfg := defaultBase()
-	if err := mergeYAML(&cfg, data, resolved); err != nil {
+	if err := applyYAML(&cfg, data, resolved); err != nil {
 		return Config{}, err
 	}
 	cfg.LoadedFrom = resolved
@@ -90,43 +86,22 @@ func Load(path string) (Config, error) {
 	return cfg, nil
 }
 
-func parseYAML(data []byte, label string) (fileConfig, error) {
+func parseFileConfig(data []byte, label string) (fileConfig, error) {
 	var file fileConfig
-	if err := yaml.Unmarshal(data, &file); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&file); err != nil {
 		return fileConfig{}, fmt.Errorf("parse config %s: %w", label, err)
 	}
 	return file, nil
 }
 
-func mergeYAML(cfg *Config, data []byte, label string) error {
-	file, err := parseYAML(data, label)
+func applyYAML(cfg *Config, data []byte, label string) error {
+	file, err := parseFileConfig(data, label)
 	if err != nil {
 		return err
 	}
 
-	if file.Engine != "" {
-		cfg.Engine = file.Engine
-	}
-	if file.Timeout != "" {
-		timeout, err := time.ParseDuration(file.Timeout)
-		if err != nil {
-			return fmt.Errorf("parse timeout: %w", err)
-		}
-		cfg.Timeout = timeout
-	}
-	if file.PullTimeout != "" {
-		pullTimeout, err := time.ParseDuration(file.PullTimeout)
-		if err != nil {
-			return fmt.Errorf("parse pull_timeout: %w", err)
-		}
-		cfg.PullTimeout = pullTimeout
-	}
-	if file.ParallelProbe != 0 {
-		cfg.ParallelProbe = file.ParallelProbe
-	}
-	if file.Retries != 0 {
-		cfg.Retries = file.Retries
-	}
 	cfg.Prefer = file.Prefer
 	cfg.Exclude = file.Exclude
 	if file.Registries != nil {
@@ -202,19 +177,15 @@ func Profiles(cfg Config) []registry.Profile {
 	return profiles
 }
 
-func normalizeMirrors(registryName string, mirrors []registry.Mirror) []registry.Mirror {
+func normalizeMirrors(registryName string, mirrors []string) []registry.Mirror {
 	normalized := make([]registry.Mirror, 0, len(mirrors))
-	for index, mirror := range mirrors {
-		if mirror.Name == "" {
-			mirror.Name = mirror.Host
-		}
-		if mirror.Mode == "" {
-			mirror.Mode = inferMode(registryName, mirror.Host)
-		}
-		if mirror.Priority == 0 {
-			mirror.Priority = 1000 - index
-		}
-		normalized = append(normalized, mirror)
+	for index, host := range mirrors {
+		normalized = append(normalized, registry.Mirror{
+			Name:     host,
+			Host:     host,
+			Mode:     inferMode(registryName, host),
+			Priority: 1000 - index,
+		})
 	}
 	return normalized
 }

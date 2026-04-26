@@ -41,7 +41,7 @@ Default paths:
 
 The official default config is distributed as `configs/mip.yaml` and is embedded
 into `mip` for zero-config mirror use. If a user config exists or `--config` is
-provided, that single config is used instead of merging with the official one.
+provided, that single config replaces the official one.
 
 Example:
 
@@ -53,8 +53,7 @@ exclude:
 registries:
   docker.io:
     mirrors:
-      - name: company-cache
-        host: registry.example.com/docker.io
+      - registry.example.com/docker.io
 ```
 
 Mirror entries can usually be written as host strings:

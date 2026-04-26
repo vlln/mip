@@ -27,7 +27,7 @@ internal/registry/       registry profiles and mirror rewrite rules
 internal/probe/          manifest probe, auth challenge, latency measurement
 internal/score/          candidate ranking
 internal/engine/         docker, podman, nerdctl adapters
-internal/config/         XDG config loading and merging
+internal/config/         official or user config loading
 internal/state/          probe cache and mirror health history
 internal/output/         text, JSON, and plain output formats
 ```

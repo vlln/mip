@@ -79,23 +79,20 @@ Example mirror entry:
 
 ## User Configuration
 
-Users can add or override mirrors:
+Users can maintain a single config with the mirror hosts they want:
 
 ```yaml
-engine: docker
-
 registries:
   ghcr.io:
     mirrors:
-      - name: company-cache-ghcr
-        host: registry.example.com/ghcr.io
+      - registry.example.com/ghcr.io
 ```
 
-Users can prefer or exclude mirrors by name or host:
+Users can prefer or exclude mirrors by host:
 
 ```yaml
 prefer:
-  - company-cache-ghcr
+  - registry.example.com/ghcr.io
 exclude:
   - ghcr.m.daocloud.io
 ```
