@@ -32,6 +32,13 @@ mip mirrors list
 mip mirrors list --registry registry.k8s.io
 ```
 
+Prefetch FROM images from a Dockerfile:
+
+```bash
+mip prefetch --dry-run
+mip prefetch -f path/to/Dockerfile
+```
+
 ## Config
 
 Default paths:

@@ -269,3 +269,56 @@ func (f *fakeEngine) Remove(_ context.Context, image string) error {
 func (f *fakeEngine) RepoDigests(_ context.Context, image string) ([]string, error) {
 	return f.repoDigests[image], nil
 }
+
+func TestExtractFromImages(t *testing.T) {
+	content := `FROM nginx:1.27
+FROM redis:7-alpine AS cache
+FROM --platform=linux/amd64 golang:1.22 AS builder
+FROM scratch
+# this is a comment
+FROM nginx:1.27
+FROM alpine
+`
+	path := writeTempfile(t, content)
+
+	got, err := extractFromImages(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 4 {
+		t.Fatalf("got %d images, want 4: %v", len(got), got)
+	}
+	want := []string{"nginx:1.27", "redis:7-alpine", "golang:1.22", "alpine"}
+	for i, w := range want {
+		if got[i] != w {
+			t.Fatalf("images[%d] = %q, want %q", i, got[i], w)
+		}
+	}
+}
+
+func TestExtractFromImagesEmptyFile(t *testing.T) {
+	got, err := extractFromImages(writeTempfile(t, "# just a comment\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("got %d images, want 0", len(got))
+	}
+}
+
+func writeTempfile(t *testing.T, content string) string {
+	t.Helper()
+	f, err := os.CreateTemp("", "mip-test-dockerfile-*.Dockerfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.WriteString(content); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Remove(f.Name()) })
+	return f.Name()
+}

@@ -21,7 +21,7 @@ _mip_completion() {
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
-  commands="version pull rewrite probe mirrors config completion help"
+  commands="version pull prefetch rewrite probe mirrors config completion help"
 
   case "$prev" in
     --engine)
@@ -39,7 +39,7 @@ _mip_completion() {
   esac
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY=( $(compgen -W "--config --json --dry-run --no-retag --no-verify-digest --engine --platform --timeout --pull-timeout --concurrency --retries --all --plain --registry" -- "$cur") )
+    COMPREPLY=( $(compgen -W "--config --json --dry-run --no-retag --no-verify-digest --engine --platform --timeout --pull-timeout --concurrency --retries --all --plain --registry --file" -- "$cur") )
     return 0
   fi
 
@@ -57,6 +57,7 @@ _mip() {
   commands=(
     'version:show version'
     'pull:pull image'
+    'prefetch:pull FROM images from Dockerfile'
     'rewrite:rewrite image'
     'probe:probe image'
     'mirrors:list mirrors'
@@ -77,6 +78,7 @@ _mip() {
     '--concurrency[probe concurrency]' \
     '--retries[pull attempts per candidate]' \
     '--all[all candidates]' \
+    '--file[path to Dockerfile]:file:_files' \
     '--plain[plain output]' \
     '--registry[registry]:(docker.io ghcr.io quay.io mcr.microsoft.com registry.k8s.io gcr.io docker.elastic.co nvcr.io)' \
     '1:command:->command' \
@@ -90,7 +92,7 @@ _mip "$@"
 
 const fish = `# fish completion for mip
 complete -c mip -f
-complete -c mip -n '__fish_use_subcommand' -a 'version pull rewrite probe mirrors config completion help'
+complete -c mip -n '__fish_use_subcommand' -a 'version pull prefetch rewrite probe mirrors config completion help'
 complete -c mip -l config -r -d 'config file'
 complete -c mip -l json -d 'emit JSON'
 complete -c mip -l dry-run -d 'show plan'
@@ -104,5 +106,6 @@ complete -c mip -l concurrency -r -d 'probe concurrency'
 complete -c mip -l retries -r -d 'pull attempts per candidate'
 complete -c mip -l all -d 'all candidates'
 complete -c mip -l plain -d 'plain output'
+complete -c mip -l file -r -d 'path to Dockerfile'
 complete -c mip -l registry -r -a 'docker.io ghcr.io quay.io mcr.microsoft.com registry.k8s.io gcr.io docker.elastic.co nvcr.io'
 `

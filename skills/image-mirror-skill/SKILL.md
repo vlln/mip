@@ -65,7 +65,8 @@ brew install vlln/tap/mip
 3. Pull safely: use `mip pull IMAGE --dry-run`, then `mip pull IMAGE`.
 4. Keep original local tag: use default `mip pull IMAGE`.
 5. Keep mirror tag for debugging: use `mip pull IMAGE --no-retag`.
-6. Customize mirror order: edit XDG config, then run `mip config show`.
+6. Prefetch Dockerfile base images: use `mip prefetch --dry-run`, then `mip prefetch` before `docker build`.
+7. Customize mirror order: edit XDG config, then run `mip config show`.
 
 For detailed command syntax, read `references/mip-cli.md`.
 
@@ -83,6 +84,14 @@ Pull after the selected mirror looks reasonable:
 
 ```bash
 mip pull nginx:1.27 --engine docker --platform linux/amd64
+```
+
+Prefetch all base images from a Dockerfile before building:
+
+```bash
+mip prefetch --dry-run
+mip prefetch
+docker build -t myapp .
 ```
 
 Use JSON for structured agent/tool output:

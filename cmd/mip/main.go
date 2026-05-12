@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -61,6 +62,8 @@ func run(args []string) int {
 		return runProbe(args[1:])
 	case "pull":
 		return runPull(args[1:])
+	case "prefetch":
+		return runPrefetch(args[1:])
 	default:
 		return runPull(append([]string{args[0]}, args[1:]...))
 	}
@@ -267,10 +270,90 @@ func runPull(args []string) int {
 		return exitConfigError
 	}
 
-	image, err := ref.Parse(fs.Arg(0))
+	runner, err := engine.New(*engineName)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "invalid image reference: %v\n", err)
-		return exitInvalidRef
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return exitConfigError
+	}
+
+	profiles := appconfig.Profiles(cfg)
+	store := loadState()
+	code := pullOne(cfg, runner, profiles, &store, fs.Arg(0), pullOptions{
+		platform:       *platform,
+		probeTimeout:   *probeTimeout,
+		pullTimeout:    *pullTimeout,
+		concurrency:    *concurrency,
+		retries:        *retries,
+		noRetag:        *noRetag,
+		noVerifyDigest: *noVerifyDigest,
+	}, *dryRun, *jsonOut)
+	saveState(store)
+	return code
+}
+
+func runPrefetch(args []string) int {
+	fs := flag.NewFlagSet("prefetch", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	jsonOut := fs.Bool("json", false, "emit JSON")
+	dryRun := fs.Bool("dry-run", false, "show selected candidates without pulling")
+	dockerfile := fs.String("file", "Dockerfile", "path to Dockerfile")
+	fShort := fs.String("f", "Dockerfile", "path to Dockerfile (shorthand)")
+	configPath := fs.String("config", configPathArg(args), "config file path")
+	cfg, err := appconfig.Load(*configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "config error: %v\n", err)
+		return exitConfigError
+	}
+	engineName := fs.String("engine", cfg.Engine, "container engine: docker, podman, or nerdctl")
+	platform := fs.String("platform", "", "platform passed to the engine pull command, for example linux/amd64")
+	probeTimeout := fs.Duration("timeout", cfg.Timeout, "per candidate probe timeout")
+	pullTimeout := fs.Duration("pull-timeout", cfg.PullTimeout, "engine pull timeout")
+	concurrency := fs.Int("concurrency", cfg.ParallelProbe, "maximum concurrent probes")
+	retries := fs.Int("retries", cfg.Retries, "pull attempts per candidate")
+	if err := fs.Parse(moveFlagsFirst(args, map[string]bool{
+		"--json": true, "--dry-run": true,
+	}, map[string]bool{
+		"--config": true, "--engine": true, "--platform": true, "--timeout": true, "--pull-timeout": true, "--concurrency": true, "--retries": true, "--file": true, "-f": true,
+	})); err != nil {
+		return exitGeneralError
+	}
+	if fs.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "usage: mip prefetch [--file Dockerfile] [--engine docker|podman|nerdctl] [--dry-run] [--platform PLATFORM]")
+			fmt.Fprintln(os.Stderr, "       Defaults to ./Dockerfile, falls back to ./Containerfile if not found.")
+		return exitGeneralError
+	}
+	if *retries < 1 {
+		fmt.Fprintln(os.Stderr, "retries must be at least 1")
+		return exitConfigError
+	}
+
+	path := *dockerfile
+	if *fShort != "Dockerfile" {
+		path = *fShort
+	}
+
+	explicitFile := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "file" || f.Name == "f" {
+			explicitFile = true
+		}
+	})
+	if !explicitFile {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			if _, err := os.Stat("Containerfile"); err == nil {
+				path = "Containerfile"
+			}
+		}
+	}
+
+	images, err := extractFromImages(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error reading %s: %v\n", path, err)
+		return exitGeneralError
+	}
+	if len(images) == 0 {
+		fmt.Fprintf(os.Stderr, "no FROM images found in %s\n", path)
+		return exitGeneralError
 	}
 
 	runner, err := engine.New(*engineName)
@@ -281,10 +364,59 @@ func runPull(args []string) int {
 
 	profiles := appconfig.Profiles(cfg)
 	store := loadState()
-	selected, results, code := selectCandidate(context.Background(), profiles, store, image, *probeTimeout, *concurrency, *platform)
-	saveState(store.Record(results))
-	if code != exitOK {
+	opts := pullOptions{
+		platform:       *platform,
+		probeTimeout:   *probeTimeout,
+		pullTimeout:    *pullTimeout,
+		concurrency:    *concurrency,
+		retries:        *retries,
+		noRetag:        false,
+		noVerifyDigest: false,
+	}
+
+	failed := 0
+	for i, image := range images {
+		if len(images) > 1 {
+			fmt.Fprintf(os.Stderr, "[%d/%d] %s\n", i+1, len(images), image)
+		}
+		code := pullOne(cfg, runner, profiles, &store, image, opts, *dryRun, *jsonOut)
+		if code != exitOK {
+			failed++
+		}
+	}
+
+	saveState(store)
+
+	if failed > 0 {
 		if *jsonOut {
+			_ = output.JSON(os.Stdout, map[string]any{
+				"status": "prefetch_complete",
+				"total":  len(images),
+				"failed": failed,
+			})
+		} else {
+			fmt.Fprintf(os.Stderr, "\nprefetch: %d/%d images failed\n", failed, len(images))
+		}
+		return exitPullFailed
+	}
+
+	if !*jsonOut && !*dryRun && len(images) > 1 {
+		fmt.Fprintf(os.Stderr, "\nprefetch: all %d images pulled\n", len(images))
+	}
+	return exitOK
+}
+
+func pullOne(cfg appconfig.Config, runner engine.Engine, profiles []registry.Profile, store *state.Store, imageName string, opts pullOptions, dryRun, jsonOut bool) int {
+	image, err := ref.Parse(imageName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "invalid image reference: %v\n", err)
+		return exitInvalidRef
+	}
+
+	selected, results, code := selectCandidate(context.Background(), profiles, *store, image, opts.probeTimeout, opts.concurrency, opts.platform)
+	*store = store.Record(results)
+	if code != exitOK {
+		if jsonOut {
 			_ = output.JSON(os.Stdout, map[string]any{
 				"image":   image.String(),
 				"status":  "no_usable_mirror",
@@ -296,8 +428,12 @@ func runPull(args []string) int {
 		return code
 	}
 
-	if *dryRun {
-		if *jsonOut {
+	if !jsonOut {
+		fmt.Fprintf(os.Stderr, "probing %d candidates → %s (%dms)\n", len(results), selected.Mirror, selected.LatencyMS)
+	}
+
+	if dryRun {
+		if jsonOut {
 			_ = output.JSON(os.Stdout, map[string]any{
 				"image":    image.String(),
 				"selected": selected.Image,
@@ -320,16 +456,10 @@ func runPull(args []string) int {
 	}
 
 	start := time.Now()
-	pullResult, pullCode := pullWithFallback(context.Background(), runner, image.String(), successfulResults(results), pullOptions{
-		platform:       *platform,
-		pullTimeout:    *pullTimeout,
-		retries:        *retries,
-		noRetag:        *noRetag,
-		noVerifyDigest: *noVerifyDigest,
-	})
+	pullResult, pullCode := pullWithFallback(context.Background(), runner, image.String(), successfulResults(results), opts)
 	elapsed := time.Since(start).Milliseconds()
 	if pullCode != exitOK {
-		if *jsonOut {
+		if jsonOut {
 			_ = output.JSON(os.Stdout, map[string]any{
 				"image":      image.String(),
 				"selected":   selected.Image,
@@ -350,7 +480,7 @@ func runPull(args []string) int {
 	}
 	selected = pullResult.Selected
 
-	if *jsonOut {
+	if jsonOut {
 		_ = output.JSON(os.Stdout, map[string]any{
 			"image":        image.String(),
 			"selected":     selected.Image,
@@ -387,6 +517,55 @@ func runPull(args []string) int {
 	return exitOK
 }
 
+func extractFromImages(path string) ([]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	seen := map[string]bool{}
+	var images []string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		upper := strings.ToUpper(line)
+		if !strings.HasPrefix(upper, "FROM ") {
+			continue
+		}
+
+		rest := strings.TrimSpace(line[5:])
+		// strip --platform=xxx flag
+		if strings.HasPrefix(rest, "--") {
+			if idx := strings.Index(rest, " "); idx > 0 {
+				rest = strings.TrimSpace(rest[idx+1:])
+			}
+		}
+
+		// strip AS alias
+		if idx := strings.LastIndex(strings.ToUpper(rest), " AS "); idx > 0 {
+			rest = strings.TrimSpace(rest[:idx])
+		}
+
+		if rest == "" || strings.EqualFold(rest, "scratch") {
+			continue
+		}
+
+		if seen[rest] {
+			continue
+		}
+		seen[rest] = true
+		images = append(images, rest)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return images, nil
+}
+
 func printPullAttempts(out io.Writer, attempts []pullAttempt) {
 	if len(attempts) == 0 {
 		return
@@ -403,7 +582,9 @@ func printPullAttempts(out io.Writer, attempts []pullAttempt) {
 
 type pullOptions struct {
 	platform       string
+	probeTimeout   time.Duration
 	pullTimeout    time.Duration
+	concurrency    int
 	retries        int
 	noRetag        bool
 	noVerifyDigest bool
@@ -436,7 +617,7 @@ func pullWithFallback(ctx context.Context, runner engine.Engine, target string, 
 			if err != nil {
 				record.Error = err.Error()
 				outcome.Attempts = append(outcome.Attempts, record)
-				fmt.Fprintf(os.Stderr, "pull attempt failed: image=%s attempt=%d/%d error=%v\n", candidate.Image, attempt, options.retries, err)
+				fmt.Fprintf(os.Stderr, "pull attempt failed: via=%s attempt=%d/%d error=%v\n", candidate.Mirror, attempt, options.retries, err)
 				if strings.Contains(err.Error(), "digest verification failed") {
 					digestMismatch = true
 					break
@@ -744,6 +925,7 @@ Usage:
   mip version [--json]
   mip completion bash|zsh|fish
   mip pull IMAGE [--engine docker|podman|nerdctl] [--dry-run] [--platform PLATFORM] [--retries N] [--no-retag] [--no-verify-digest] [--json]
+  mip prefetch [--file Dockerfile] [--engine docker|podman|nerdctl] [--dry-run] [--platform PLATFORM]
   mip rewrite IMAGE [--all] [--plain] [--json]
   mip probe IMAGE [--platform PLATFORM] [--timeout DURATION] [--concurrency N] [--json]
   mip mirrors list [--registry REGISTRY] [--json]
@@ -757,6 +939,8 @@ Examples:
   mip rewrite nginx:1.27 --all
   mip probe nginx:1.27
   mip rewrite ghcr.io/actions/actions-runner:latest --plain
+  mip prefetch
+  mip prefetch -f build/Dockerfile --dry-run
   mip mirrors list --registry registry.k8s.io
 `)
 	fmt.Fprintln(out, usage)

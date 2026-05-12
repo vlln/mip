@@ -61,6 +61,21 @@ mip pull hello-world:latest --platform linux/amd64 --retries 2
 mip pull hello-world:latest --engine podman --dry-run
 ```
 
+Pull all `FROM` images in a Dockerfile before building:
+
+```bash
+mip prefetch
+mip prefetch -f path/to/Dockerfile --dry-run
+```
+
+If `Dockerfile` is not found, `mip prefetch` falls back to `Containerfile`.
+
+Then build as usual — Docker will use the already-pulled images:
+
+```bash
+docker build -t myapp .
+```
+
 ## Why It Feels Different
 
 `mip` is not just a text replacement tool. It checks whether candidates can

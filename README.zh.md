@@ -51,6 +51,21 @@ mip pull hello-world:latest --platform linux/amd64 --retries 2
 mip pull hello-world:latest --engine podman --dry-run
 ```
 
+在构建前预先拉取 Dockerfile 中所有的 `FROM` 镜像：
+
+```bash
+mip prefetch
+mip prefetch -f path/to/Dockerfile --dry-run
+```
+
+如果找不到 `Dockerfile`，`mip prefetch` 会自动回退到 `Containerfile`。
+
+然后正常构建即可——Docker 会直接使用本地已有的镜像：
+
+```bash
+docker build -t myapp .
+```
+
 ## 它不只是字符串替换
 
 `mip` 会检查候选地址是否真的能提供你要的 manifest，支持带平台的 manifest list，记录基础 mirror 健康状态，并在已知 manifest digest 时校验拉取结果。
