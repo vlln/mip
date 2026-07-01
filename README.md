@@ -1,8 +1,21 @@
-# mip
+<h1 align="center">mip</h1>
 
-Pull container images when the default registry path lets you down.
+<p align="center">
+  <strong>Pull container images through the fastest reachable mirror.</strong><br/>
+  An Agent Skill that helps AI agents diagnose and fix container image pull failures
+  by probing mirror candidates, rewriting image references, and pulling through the
+  best working path.
+</p>
+
+<p align="center">
+  <a href="https://github.com/vlln/mip/stargazers"><img src="https://badgen.net/github/stars/vlln/mip?label=%E2%98%85" alt="GitHub stars" /></a>
+  <img src="https://badgen.net/badge/license/MIT/blue" alt="MIT" />
+  <img src="https://badgen.net/badge/spec/Agent%20Skills/8257D0" alt="Agent Skills spec" />
+</p>
 
 [简体中文](README.zh.md)
+
+---
 
 `mip` is a small CLI for the moments when `docker pull` gets stuck, times out,
 or crawls through an overloaded registry route. Keep using the image names your
@@ -76,23 +89,7 @@ Then build as usual — Docker will use the already-pulled images:
 docker build -t myapp .
 ```
 
-## Why It Feels Different
-
-`mip` is not just a text replacement tool. It checks whether candidates can
-actually serve the manifest you asked for, handles platform-aware manifest
-lists, remembers basic mirror health, and verifies the pulled digest when the
-selected manifest digest is known.
-
-It ships with default rules for common public registries, including Docker Hub,
-GHCR, Quay, MCR, Kubernetes, GCR, Elastic, NVCR, DHI, and Ollama. You can use it
-with no config file, then add your own preferences when you need control.
-
-```bash
-mip mirrors list --registry registry.k8s.io
-mip config show
-```
-
-## Install
+## Install CLI
 
 ### Homebrew
 
@@ -112,6 +109,22 @@ mip version
 
 By default the script installs to `/usr/local/bin` when writable, otherwise to
 `$HOME/.local/bin`. Set `MIP_BINDIR` to choose another directory.
+
+## Why It Feels Different
+
+`mip` is not just a text replacement tool. It checks whether candidates can
+actually serve the manifest you asked for, handles platform-aware manifest
+lists, remembers basic mirror health, and verifies the pulled digest when the
+selected manifest digest is known.
+
+It ships with default rules for common public registries, including Docker Hub,
+GHCR, Quay, MCR, Kubernetes, GCR, Elastic, NVCR, DHI, and Ollama. You can use it
+with no config file, then add your own preferences when you need control.
+
+```bash
+mip mirrors list --registry registry.k8s.io
+mip config show
+```
 
 ## Configure
 
@@ -154,23 +167,44 @@ mip completion zsh > ~/.zfunc/_mip
 mip completion fish > ~/.config/fish/completions/mip.fish
 ```
 
-## Agent Skill
+---
 
-This repository includes an Agent Skill for AI agents that help diagnose and
-repair container image pull failures.
+## Installation
 
-```sh
-skit install --global vlln/mip/skills/image-mirror-skill
+### [skit](https://github.com/vlln/skit) (Recommended)
+
+```bash
+skit install https://github.com/vlln/mip/tree/main/skills/image-mirror-skill
 ```
 
-Install all skills in this repository:
+### [skill.sh](https://github.com/vercel-labs/skills)
 
-```sh
-skit install --global vlln/mip --all
+```bash
+npx skills add vlln/mip
 ```
 
-Manual install: copy [skills/image-mirror-skill/](skills/image-mirror-skill/) into
-your agent's skills directory.
+### Manually
+
+| Agent | Command |
+|-------|---------|
+| **Claude Code** | `cp -r skills/image-mirror-skill .claude/skills/` |
+| **Codex** | `cp -r skills/image-mirror-skill ~/.codex/skills/` |
+| **OpenCode** | `git clone https://github.com/vlln/mip.git ~/.opencode/skills/mip` |
+| **Kimi** | `cp -r skills/image-mirror-skill ~/.kimi/skills/` |
+
+---
+
+## Skills
+
+| Skill | Description |
+|-------|-------------|
+| [image-mirror-skill](skills/image-mirror-skill/SKILL.md) | Accelerate and troubleshoot Docker/OCI image pulls using registry-aware mirror rewriting, probing, and pulling. |
+
+## Requirements
+
+- Docker, Podman, or nerdctl for real image pulls.
+- Network access to the selected registries and mirrors.
+- Go 1.22+ only for development builds.
 
 ## Develop
 
@@ -186,12 +220,6 @@ Create local release archives:
 make release VERSION=0.1.0
 ls dist/
 ```
-
-## Requirements
-
-- Docker, Podman, or nerdctl for real image pulls.
-- Network access to the selected registries and mirrors.
-- Go 1.22+ only for development builds.
 
 ## License
 
