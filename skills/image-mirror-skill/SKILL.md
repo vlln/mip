@@ -12,12 +12,10 @@ requires:
 
 # Image Mirror Skill
 
-Use this skill to help users accelerate and troubleshoot container image pulls
-through registry-aware mirrors with the `mip` CLI.
-
-`mip` helps when `docker pull` is slow, unstable, or blocked. It rewrites image
-references to known mirrors, probes reachability, pulls through Docker, Podman,
-or nerdctl, and retags the local image back to the original name by default.
+Use this skill when `docker pull` (or `podman`/`nerdctl`) is slow, unstable, or
+blocked. `mip` rewrites image references to known mirrors, probes reachability,
+pulls through the container engine, and retags the local image back to the
+original name.
 
 ## Trigger Keywords
 
@@ -27,98 +25,50 @@ or nerdctl, and retags the local image back to the original name by default.
 - pull image from mirror, accelerate image pull, speed up image pull
 - mip
 
-## Decision Flow
+## Capabilities
 
-1. Slow or failed pull: start by probing mirror reachability with a timeout.
-2. Explain mirror rewrites: show all rewrite candidates for the image.
-3. Pull safely: dry-run first, then pull for real.
-4. Keep original local tag: use default pull (retags automatically).
-5. Keep mirror tag for debugging: use `--no-retag`.
-6. Prefetch Dockerfile base images: dry-run first, then prefetch before
-   `docker build`.
-7. Customize mirror order: edit XDG config, then show the config.
+- **Rewrite** image references to mirror candidates for a given registry.
+- **Probe** mirror reachability and latency without pulling.
+- **Pull** images through the fastest reachable mirror, retagging to the
+  original reference by default.
+- **Prefetch** all `FROM` base images from a Dockerfile before building.
+- **Inspect** configured mirrors and runtime config.
 
-For detailed command syntax, read `references/mip-cli.md`.
+For command syntax, flags, config format, and state file paths, read
+`references/mip-cli.md`.
 
-## Core Workflows
+## Workflow
 
-Non-destructive inspection:
+When a user reports slow or failed image pulls:
 
-```bash
-mip rewrite nginx:1.27 --all
-mip probe nginx:1.27 --timeout 8s
-mip pull hello-world:latest --dry-run
-```
+1. **Probe first.** Run `mip probe <image> --timeout 8s` to find reachable
+   mirrors and compare latency. Use `--json` for structured output.
+2. **Show mirrors.** Run `mip rewrite <image> --all` to list all rewrite
+   candidates. If the registry has no configured mirrors, report it.
+3. **Dry-run.** Run `mip pull <image> --dry-run` to confirm the selected mirror
+   before pulling.
+4. **Pull.** Run `mip pull <image>` with the user's platform and engine
+   preferences. Default to `docker` unless the user specifies otherwise.
+5. **Verify.** After pull, confirm the image is available locally under the
+   original name.
 
-Pull after the selected mirror looks reasonable:
-
-```bash
-mip pull nginx:1.27 --engine docker --platform linux/amd64
-```
-
-Prefetch all base images from a Dockerfile before building:
-
-```bash
-mip prefetch --dry-run
-mip prefetch
-docker build -t myapp .
-```
-
-Use JSON for structured agent/tool output:
-
-```bash
-mip probe nginx:1.27 --platform linux/amd64 --json
-mip pull nginx:1.27 --json
-```
-
-Inspect mirrors and config:
-
-```bash
-mip mirrors list
-mip mirrors list --registry registry.k8s.io
-mip config show
-```
-
-## Troubleshooting Patterns
-
-- Probe with `--timeout 8s`: find reachable mirrors and compare latency.
-- Rewrite with `--all`: check whether the registry has configured mirrors.
-- Pull with `--dry-run`: confirm the selected mirror before pulling.
-- Pull with `--retries 2`: retry transient pull errors per candidate.
-- Pull with `--engine podman`: use Podman instead of Docker.
-- Pull with `--no-verify-digest`: use only when digest inspection is broken
-  and the user accepts the tradeoff.
-- Pull with `--no-retag`: keep the mirror image name locally for debugging.
+For Dockerfile builds, use `mip prefetch --dry-run` first, then `mip prefetch`
+before `docker build`.
 
 ## Gotchas
 
+- **Do not edit the Docker daemon config.** `mip` rewrites at the pull command
+  level — it does not need changes to `/etc/docker/daemon.json` or
+  `registries.conf`. Never suggest daemon config changes.
+- **Digest verification may fail.** If a registry serves different manifests
+  for the same tag across mirrors, digest mismatch errors occur. Use
+  `--no-verify-digest` only after confirming the user understands the risk.
+- **Auth-required mirrors remain in the fallback chain.** They appear as
+  warnings but are not skipped — `docker login` to the mirror may still work.
+- **Platform-specific manifests may not exist on all mirrors.** When using
+  `--platform`, probe first to check availability.
+- **Rewrite, probe, and config inspection work without a container engine.**
+  Docker, Podman, or nerdctl are only needed for actual pulls.
 - **Mirror pull is not a security boundary.** Public mirrors can serve
   different content than the original registry. For production, sync required
   images into a trusted private registry and pull by digest.
-- **Digest verification may fail on some registries.** If a registry serves
-  different manifests for the same tag across mirrors, digest mismatch errors
-  occur. Use `--no-verify-digest` only after confirming the user understands
-  the risk.
-- **Auth-required mirrors are not skipped.** They remain in the fallback
-  chain as warnings — this is intentional to handle registries that require
-  `docker login` but may still work after authentication.
-- **Platform-specific manifests may not exist on all mirrors.** When using
-  `--platform`, probe first to check availability before pulling.
-- **Do not edit the Docker daemon config.** `mip` rewrites at the pull
-  command level — it does not need changes to `/etc/docker/daemon.json` or
-  `registries.conf`. Avoid suggesting daemon config changes unless the user
-  explicitly asks for them.
-- **A container engine is only required for actual pulls.** Rewrite, probe,
-  and config inspection all work without Docker, Podman, or nerdctl installed.
-
-## Safety Defaults
-
-- Prefer `--dry-run` before real pulls when changing mirrors or config.
-- Prefer probing when diagnosing network or mirror issues.
-- Do not edit Docker daemon config unless the user explicitly asks; `mip` is
-  designed to avoid daemon mutation.
-- Keep public mirrors as convenience infrastructure, not a production
-  supply-chain trust boundary.
-- For production, recommend syncing required images into a trusted private
-  registry and pulling by digest.
-- If `mip` is unavailable, install it first or ask for approval when required.
