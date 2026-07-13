@@ -84,6 +84,14 @@ esac
 version="$(resolve_latest_version)"
 bindir="$(choose_bindir)"
 
+if [ -x "${bindir}/mip" ]; then
+  installed_version="$("${bindir}/mip" version 2>/dev/null | sed -n 's/^mip //p')"
+  if [ "${installed_version}" = "${version}" ]; then
+    echo "mip ${version} is already installed at ${bindir}/mip"
+    exit 0
+  fi
+fi
+
 base="https://github.com/${repo}/releases/download/v${version}"
 artifact_version="$version"
 name="mip_${artifact_version}_${os}_${arch}"
