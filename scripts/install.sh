@@ -84,14 +84,27 @@ esac
 version="$(resolve_latest_version)"
 bindir="$(choose_bindir)"
 
-if [ -x "${bindir}/mip" ] && [ -x "${bindir}/gip" ]; then
+need_install=0
+if [ -x "${bindir}/mip" ]; then
   installed_mip="$("${bindir}/mip" version 2>/dev/null | sed -n 's/^mip //p')"
-  installed_gip="$("${bindir}/gip" version 2>/dev/null | sed -n 's/^gip //p')"
-  if [ "${installed_mip}" = "${version}" ] && [ "${installed_gip}" = "${version}" ]; then
-    echo "mip ${version} is already installed at ${bindir}/mip"
-    echo "gip ${version} is already installed at ${bindir}/gip"
-    exit 0
+  if [ "${installed_mip}" != "${version}" ]; then
+    need_install=1
   fi
+else
+  need_install=1
+fi
+if [ -x "${bindir}/gip" ]; then
+  installed_gip="$("${bindir}/gip" version 2>/dev/null | sed -n 's/^gip //p')"
+  if [ "${installed_gip}" != "${version}" ]; then
+    need_install=1
+  fi
+else
+  need_install=1
+fi
+if [ "$need_install" -eq 0 ]; then
+  echo "mip ${version} is already installed at ${bindir}/mip"
+  echo "gip ${version} is already installed at ${bindir}/gip"
+  exit 0
 fi
 
 base="https://github.com/${repo}/releases/download/v${version}"
@@ -110,9 +123,11 @@ tar -xzf "${tmp}/${archive}" -C "$tmp"
 
 mkdir -p "$bindir"
 install -m 0755 "${tmp}/${name}/mip" "${bindir}/mip"
-install -m 0755 "${tmp}/${name}/gip" "${bindir}/gip"
 echo "installed ${bindir}/mip"
-echo "installed ${bindir}/gip"
+if [ -f "${tmp}/${name}/gip" ]; then
+  install -m 0755 "${tmp}/${name}/gip" "${bindir}/gip"
+  echo "installed ${bindir}/gip"
+fi
 case ":${PATH:-}:" in
   *":${bindir}:"*) ;;
   *) echo "note: ${bindir} is not in PATH; add it before running mip directly" >&2 ;;
