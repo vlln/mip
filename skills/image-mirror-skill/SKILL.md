@@ -1,6 +1,6 @@
 ---
 name: image-mirror-skill
-description: Use this skill when you need to accelerate or troubleshoot Docker/OCI image pulls that are slow, unstable, or blocked, using registry-aware mirror rewriting, probing, and pulling.
+description: Use this skill when you need to accelerate or troubleshoot Docker/OCI image pulls that are slow, unstable, or blocked, using registry-aware mirror rewriting, probing, pulling, and retagging. Activate when the user mentions docker pull, podman pull, nerdctl pull, image pull timeout, container registry mirror, Docker Hub blocked, accelerating image pulls, prefetching FROM images, or any container image not pulling cleanly from the current network.
 license: MIT
 metadata:
   author: vlln
@@ -23,6 +23,8 @@ original name.
 - image pull slow, image pull timeout, image pull blocked
 - container registry mirror, Docker mirror, registry mirror
 - pull image from mirror, accelerate image pull, speed up image pull
+- Docker Hub unreachable, GHCR blocked, Quay timeout
+- prefetch, Dockerfile FROM images, pre-pull base images
 - mip
 
 ## Capabilities
@@ -35,7 +37,7 @@ original name.
 - **Inspect** configured mirrors and runtime config.
 
 For command syntax, flags, config format, and state file paths, read
-`references/mip-cli.md`.
+`$_S/references/mip-cli.md`.
 
 ## Workflow
 
@@ -50,7 +52,7 @@ When a user reports slow or failed image pulls:
 4. **Pull.** Run `mip pull <image>` with the user's platform and engine
    preferences. Default to `docker` unless the user specifies otherwise.
 5. **Verify.** After pull, confirm the image is available locally under the
-   original name.
+   original name (`docker images`).
 
 For Dockerfile builds, use `mip prefetch --dry-run` first, then `mip prefetch`
 before `docker build`.
@@ -72,3 +74,12 @@ before `docker build`.
 - **Mirror pull is not a security boundary.** Public mirrors can serve
   different content than the original registry. For production, sync required
   images into a trusted private registry and pull by digest.
+- **Mirror availability changes frequently.** The default mirror list in
+  `configs/mip.yaml` may become stale. Always probe before relying on a mirror.
+- **Source registry may be reachable when mirrors are not.** `mip` always
+  includes the source registry as a low-priority fallback candidate. If all
+  mirrors fail, it will try the original registry.
+- **Two rewrite modes exist.** `host-replace` swaps the registry host (e.g.
+  `docker.io` → `dockerproxy.net`). `prefix` prepends a mirror path (e.g.
+  `docker.io` → `m.daocloud.io/docker.io`). The mode is inferred from the
+  mirror host format.

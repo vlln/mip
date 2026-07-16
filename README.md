@@ -1,30 +1,35 @@
-<h1 align="center">mip</h1>
+<h1 align="center">mip &amp; gip</h1>
 
 <p align="center">
-  <strong>Pull container images through the fastest reachable mirror.</strong><br/>
-  An Agent Skill that helps AI agents diagnose and fix container image pull failures
-  by probing mirror candidates, rewriting image references, and pulling through the
-  best working path.
+  <strong>mip: Pull container images through the fastest reachable mirror.<br/>
+  gip: Clone, fetch, and download from GitHub through the fastest mirror.</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/vlln/mip/stargazers"><img src="https://badgen.net/github/stars/vlln/mip?label=%E2%98%85" alt="GitHub stars" /></a>
   <img src="https://badgen.net/badge/license/MIT/blue" alt="MIT" />
-  <img src="https://badgen.net/badge/spec/Agent%20Skills/8257D0" alt="Agent Skills spec" />
 </p>
 
 [简体中文](README.zh.md)
 
 ---
 
-`mip` is a small CLI for the moments when `docker pull` gets stuck, times out,
-or crawls through an overloaded registry route. Keep using the image names your
-project already has. `mip` finds mirror candidates, checks which ones are alive,
-pulls through a working path, and leaves the image tagged the way your tools
-expect.
+Two small CLIs for the moments when `docker pull` gets stuck, or `git clone` crawls
+through an overloaded route. Keep using the names your project already has. They find
+mirror candidates, check which ones are alive, and route through the best working path.
+
+## mip — Container Image Mirror
 
 ```bash
 mip pull nginx:1.27
+```
+
+## gip — GitHub Mirror
+
+```bash
+gip clone https://github.com/user/repo
+gip get https://github.com/user/repo/releases/download/v1.0/binary.tar.gz
+gip install    # transparent git insteadOf proxy
 ```
 
 Use it once from a terminal, drop it into CI, or ask it why an image will not
@@ -89,6 +94,45 @@ Then build as usual — Docker will use the already-pulled images:
 docker build -t myapp .
 ```
 
+## gip — GitHub Mirror
+
+`gip` does for GitHub what `mip` does for container registries. It probes mirror
+candidates for GitHub URLs, finds the fastest reachable one, and routes git clone,
+file downloads, and raw content through it.
+
+### Clone through a mirror
+
+```bash
+gip clone https://github.com/user/repo
+gip clone https://github.com/user/repo --dry-run
+```
+
+### Download release assets and raw files
+
+```bash
+gip get https://github.com/user/repo/releases/download/v1.0/binary.tar.gz
+gip get https://raw.githubusercontent.com/user/repo/main/file.txt --output myfile.txt
+```
+
+### Transparent proxy (git insteadOf)
+
+Configure git to automatically route all GitHub traffic through the fastest mirror:
+
+```bash
+gip install
+# Now all git clone/fetch/pull to github.com go through the mirror
+gip uninstall
+```
+
+### Diagnostics
+
+```bash
+gip probe https://github.com/user/repo --timeout 8s
+gip rewrite https://github.com/user/repo --all
+gip mirrors list --host github.com
+gip config show
+```
+
 ## Install CLI
 
 ### Homebrew
@@ -96,6 +140,7 @@ docker build -t myapp .
 ```bash
 brew install vlln/tap/mip
 mip version
+gip version
 ```
 
 ### GitHub Release
@@ -112,31 +157,37 @@ By default the script installs to `/usr/local/bin` when writable, otherwise to
 
 ## Why It Feels Different
 
-`mip` is not just a text replacement tool. It checks whether candidates can
-actually serve the manifest you asked for, handles platform-aware manifest
-lists, remembers basic mirror health, and verifies the pulled digest when the
-selected manifest digest is known.
+`mip` and `gip` are not just text replacement tools. They check whether candidates can
+actually serve the content you asked for, remember basic mirror health, and verify
+results when possible.
 
-It ships with default rules for common public registries, including Docker Hub,
-GHCR, Quay, MCR, Kubernetes, GCR, Elastic, NVCR, DHI, and Ollama. You can use it
-with no config file, then add your own preferences when you need control.
+`mip` handles platform-aware manifest lists, OCI/Docker manifest headers, and bearer
+token auth. `gip` probes git smart-HTTP endpoints for clone mirrors and uses HTTP HEAD
+for file downloads.
+
+Both ship with default rules for common registries and hosts. Use them with no config
+file, then add your own preferences when you need control.
 
 ```bash
-mip mirrors list --registry registry.k8s.io
+mip mirrors list --registry docker.io
+gip mirrors list --host github.com
 mip config show
+gip config show
 ```
 
 ## Configure
 
-You do not need a config file to start. The default mirror rules are embedded in
-the binary and kept in [configs/mip.yaml](configs/mip.yaml).
+You do not need a config file to start. Default mirror rules are embedded in the
+binary and kept in [configs/mip.yaml](configs/mip.yaml) and [configs/gip.yaml](configs/gip.yaml).
 
 When you do want local policy, create one of:
 
 - `$XDG_CONFIG_HOME/mip/config.yaml`
 - `~/.config/mip/config.yaml`
+- `$XDG_CONFIG_HOME/gip/config.yaml`
+- `~/.config/gip/config.yaml`
 
-Example:
+Example (`mip/config.yaml`):
 
 ```yaml
 prefer:
@@ -149,12 +200,23 @@ registries:
       - registry.example.com/docker.io
 ```
 
-`mip` also keeps lightweight mirror health state in:
+Example (`gip/config.yaml`):
+
+```yaml
+prefer:
+  - my-company-mirror
+exclude:
+  - ghproxy.homeboyc.cn
+mirrors:
+  github.com:
+    mirrors:
+      - mirror.example.com:host-replace
+```
+
+Health state is kept in:
 
 - `$XDG_STATE_HOME/mip/state.json`
-- `~/.local/state/mip/state.json`
-
-If state cannot be read or written, `mip` warns and keeps going.
+- `$XDG_STATE_HOME/gip/state.json`
 
 ## Shell Completion
 
@@ -199,11 +261,13 @@ npx skills add vlln/mip
 | Skill | Description |
 |-------|-------------|
 | [image-mirror-skill](skills/image-mirror-skill/SKILL.md) | Accelerate and troubleshoot Docker/OCI image pulls using registry-aware mirror rewriting, probing, and pulling. |
+| [github-mirror-skill](skills/github-mirror-skill/SKILL.md) | Accelerate and troubleshoot GitHub access (clone, downloads, raw files) using mirror-aware URL rewriting, probing, and transparent git proxying. |
 
 ## Requirements
 
-- Docker, Podman, or nerdctl for real image pulls.
-- Network access to the selected registries and mirrors.
+- `mip`: Docker, Podman, or nerdctl for real image pulls.
+- `gip`: git for clone operations.
+- Network access to the selected registries, mirrors, and hosts.
 - Go 1.22+ only for development builds.
 
 ## Develop
@@ -212,6 +276,7 @@ npx skills add vlln/mip
 make test
 make build
 ./bin/mip version
+./bin/gip version
 ```
 
 Create local release archives:
@@ -223,4 +288,4 @@ ls dist/
 
 ## License
 
-MIT for the `mip` code and `skills/image-mirror-skill`.
+MIT for the `mip`, `gip` code and all skills.
