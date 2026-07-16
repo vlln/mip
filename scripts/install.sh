@@ -84,9 +84,10 @@ esac
 version="$(resolve_latest_version)"
 bindir="$(choose_bindir)"
 
-if [ -x "${bindir}/mip" ]; then
-  installed_version="$("${bindir}/mip" version 2>/dev/null | sed -n 's/^mip //p')"
-  if [ "${installed_version}" = "${version}" ]; then
+if [ -x "${bindir}/mip" ] && [ -x "${bindir}/gip" ]; then
+  installed_mip="$("${bindir}/mip" version 2>/dev/null | sed -n 's/^mip //p')"
+  installed_gip="$("${bindir}/gip" version 2>/dev/null | sed -n 's/^gip //p')"
+  if [ "${installed_mip}" = "${version}" ] && [ "${installed_gip}" = "${version}" ]; then
     echo "mip ${version} is already installed at ${bindir}/mip"
     echo "gip ${version} is already installed at ${bindir}/gip"
     exit 0
