@@ -88,6 +88,7 @@ if [ -x "${bindir}/mip" ]; then
   installed_version="$("${bindir}/mip" version 2>/dev/null | sed -n 's/^mip //p')"
   if [ "${installed_version}" = "${version}" ]; then
     echo "mip ${version} is already installed at ${bindir}/mip"
+    echo "gip ${version} is already installed at ${bindir}/gip"
     exit 0
   fi
 fi
@@ -108,7 +109,9 @@ tar -xzf "${tmp}/${archive}" -C "$tmp"
 
 mkdir -p "$bindir"
 install -m 0755 "${tmp}/${name}/mip" "${bindir}/mip"
+install -m 0755 "${tmp}/${name}/gip" "${bindir}/gip"
 echo "installed ${bindir}/mip"
+echo "installed ${bindir}/gip"
 case ":${PATH:-}:" in
   *":${bindir}:"*) ;;
   *) echo "note: ${bindir} is not in PATH; add it before running mip directly" >&2 ;;
