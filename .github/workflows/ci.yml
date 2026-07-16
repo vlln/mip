@@ -103,7 +103,7 @@ jobs:
           mkdir -p homebrew-tap/Formula
           cat > homebrew-tap/Formula/mip.rb <<EOF
           class Mip < Formula
-            desc "Pull container images through registry-aware mirrors"
+            desc "Pull container images and access GitHub through registry-aware mirrors (mip + gip)"
             homepage "https://github.com/vlln/mip"
             version "${version}"
             license "MIT"
@@ -134,10 +134,12 @@ jobs:
 
             def install
               bin.install "mip"
+              bin.install "gip"
             end
 
             test do
               system "#{bin}/mip", "version"
+              system "#{bin}/gip", "version"
             end
           end
           EOF
