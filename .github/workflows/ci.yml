@@ -36,6 +36,8 @@ jobs:
         run: |
           ./bin/mip version --json
           ./bin/mip rewrite nginx:1.27 --plain
+          ./bin/gip version --json
+          ./bin/gip rewrite https://github.com/user/repo --plain
 
   release:
     name: Release

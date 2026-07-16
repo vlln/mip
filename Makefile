@@ -1,4 +1,5 @@
-BINARY := mip
+BINARY_MIP := mip
+BINARY_GIP := gip
 VERSION ?= dev
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || printf none)
 DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -13,7 +14,8 @@ all: test build
 
 build:
 	mkdir -p bin
-	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/$(BINARY) ./cmd/mip
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/$(BINARY_MIP) ./cmd/mip
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/$(BINARY_GIP) ./cmd/gip
 
 test:
 	go test ./...
@@ -25,5 +27,6 @@ release:
 	VERSION="$(VERSION)" COMMIT="$(COMMIT)" DATE="$(DATE)" ./scripts/build-release.sh
 
 version: build
-	./bin/$(BINARY) version
+	./bin/$(BINARY_MIP) version
+	./bin/$(BINARY_GIP) version
 

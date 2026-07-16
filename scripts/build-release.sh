@@ -28,18 +28,22 @@ for target in "${targets[@]}"; do
   goarch="${target#*/}"
   name="mip_${version}_${goos}_${goarch}"
   bin="mip"
+  gip_bin="gip"
   if [[ "${goos}" == "windows" ]]; then
     bin="mip.exe"
+    gip_bin="gip.exe"
   fi
 
   work="${dist}/${name}"
   mkdir -p "${work}"
   printf 'building %s/%s\n' "${goos}" "${goarch}"
   GOOS="${goos}" GOARCH="${goarch}" CGO_ENABLED=0 go build -trimpath -ldflags "${ldflags}" -o "${work}/${bin}" ./cmd/mip
+  GOOS="${goos}" GOARCH="${goarch}" CGO_ENABLED=0 go build -trimpath -ldflags "${ldflags}" -o "${work}/${gip_bin}" ./cmd/gip
   cp README.md "${work}/"
   cp -R docs "${work}/docs"
   mkdir -p "${work}/configs"
   cp configs/mip.yaml "${work}/configs/"
+  cp configs/gip.yaml "${work}/configs/"
 
   if [[ "${goos}" == "windows" ]]; then
     (cd "${dist}" && zip -qr "${name}.zip" "${name}")
