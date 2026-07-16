@@ -1,0 +1,33 @@
+# Default GitHub mirrors for gip.
+# Mirrors are probed in priority order and the fastest reachable one is selected.
+#
+# Each entry supports "host:mode" or just "host" (defaults to host-replace).
+# Modes: host-replace (swap domain), prefix (prepend mirror URL), path-transform (embed host in path).
+
+mirrors:
+  github.com:
+    aliases:
+      - gh.io
+      - raw.githubusercontent.com
+      - gist.githubusercontent.com
+      - api.github.com
+      - avatars.githubusercontent.com
+      - desktop.githubusercontent.com
+      - codeload.github.com
+    mirrors:
+      # ---- Git Clone + 文件下载 (prefix) ----
+      - gh.llkk.cc:prefix
+      - gh-proxy.com:prefix
+      - ghproxy.vip:prefix
+      - ghfast.top:prefix
+      - ghproxy.net:prefix
+
+      # ---- 仅文件下载 (prefix) ----
+      - ghproxy.com:prefix
+
+      # ---- 仓库浏览 / 文件下载 (host-replace) ----
+      - kkgithub.com:host-replace
+      - githubfast.com:host-replace
+
+      # ---- 路径变换 ----
+      - gitclone.com:path-transform

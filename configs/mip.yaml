@@ -5,13 +5,24 @@ registries:
       - registry-1.docker.io
     default_namespace: library
     mirrors:
+      # 2026-06-13 亲测可用 (来源: dongyubin/DockerHub)
+      - docker.1panel.live
+      - docker.1ms.run
+      - dockerproxy.net
+      - dockerproxy.link
       - docker.m.daocloud.io
+      - docker.jiaxin.site
+      - docker.xuanyuan.me
+      - registry.cyou
+      - hubfast.cn
+      - free.hubfast.cn
+      - proxy.vvvv.ee
+      - mirror.ccs.tencentyun.com
+      # 历史保留
+      - m.daocloud.io/docker.io
       - dockerproxy.cool
       - docker.kejilion.pro
       - hub.1panel.dev
-      - m.daocloud.io/docker.io
-      - docker.1ms.run
-      - docker.xuanyuan.me
       - docker.apiba.cn
   ghcr.io:
     mirrors:
