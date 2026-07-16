@@ -1,0 +1,145 @@
+package gitstate
+
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/vlln/mip/internal/gitprobe"
+	"github.com/vlln/mip/internal/gitrewrite"
+)
+
+// Store persists mirror health across runs.
+type Store struct {
+	Path    string                  `json:"-"`
+	Mirrors map[string]MirrorHealth `json:"mirrors"`
+}
+
+// MirrorHealth tracks the health of a single mirror URL.
+type MirrorHealth struct {
+	URL            string    `json:"url"`
+	Mirror         string    `json:"mirror,omitempty"`
+	Successes      int       `json:"successes"`
+	Failures       int       `json:"failures"`
+	LastOK         bool      `json:"last_ok"`
+	LastStatusCode int       `json:"last_status_code,omitempty"`
+	LastLatencyMS  int64     `json:"last_latency_ms"`
+	LastError      string    `json:"last_error,omitempty"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+// Load reads the health state from disk, returning an empty Store if none exists.
+func Load(path string) (Store, error) {
+	resolved := path
+	if resolved == "" {
+		resolved = DefaultPath()
+	}
+	store := Store{Path: resolved, Mirrors: map[string]MirrorHealth{}}
+	data, err := os.ReadFile(resolved)
+	if errors.Is(err, os.ErrNotExist) {
+		return store, nil
+	}
+	if err != nil {
+		return store, err
+	}
+	if len(data) == 0 {
+		return store, nil
+	}
+	if err := json.Unmarshal(data, &store); err != nil {
+		return Store{Path: resolved, Mirrors: map[string]MirrorHealth{}}, err
+	}
+	store.Path = resolved
+	if store.Mirrors == nil {
+		store.Mirrors = map[string]MirrorHealth{}
+	}
+	return store, nil
+}
+
+// Save persists the health state to disk.
+func (s Store) Save() error {
+	if s.Path == "" {
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(s.Path), 0o700); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(s.Path, append(data, '\n'), 0o600)
+}
+
+// Rank adjusts candidate priorities based on saved health.
+func (s Store) Rank(candidates []gitrewrite.Candidate) {
+	for i := range candidates {
+		health, ok := s.Mirrors[candidates[i].URL]
+		if !ok {
+			continue
+		}
+		candidates[i].Priority += health.Score()
+	}
+}
+
+// Record updates the health store with probe results.
+func (s Store) Record(results []gitprobe.Result) Store {
+	if s.Mirrors == nil {
+		s.Mirrors = map[string]MirrorHealth{}
+	}
+	now := time.Now().UTC()
+	for _, result := range results {
+		health := s.Mirrors[result.URL]
+		health.URL = result.URL
+		health.Mirror = result.Mirror
+		health.LastOK = result.OK
+		health.LastStatusCode = result.StatusCode
+		health.LastLatencyMS = result.LatencyMS
+		health.LastError = result.Error
+		health.UpdatedAt = now
+		if result.OK {
+			health.Successes++
+		} else if !result.AuthRequired {
+			health.Failures++
+		}
+		s.Mirrors[result.URL] = health
+	}
+	return s
+}
+
+// Score computes a health score for ranking. Higher is better.
+// Same algorithm as mip's state.Score.
+func (h MirrorHealth) Score() int {
+	score := 0
+	score += h.Successes * 20
+	score -= h.Failures * 80
+	if h.LastOK {
+		score += 50
+	} else if !h.UpdatedAt.IsZero() {
+		score -= 150
+	}
+	switch {
+	case h.LastLatencyMS <= 0:
+	case h.LastLatencyMS < 300:
+		score += 40
+	case h.LastLatencyMS < 1000:
+		score += 20
+	case h.LastLatencyMS > 5000:
+		score -= 60
+	case h.LastLatencyMS > 2000:
+		score -= 30
+	}
+	return score
+}
+
+// DefaultPath returns the path to the health state file.
+func DefaultPath() string {
+	if xdg := os.Getenv("XDG_STATE_HOME"); xdg != "" {
+		return filepath.Join(xdg, "gip", "state.json")
+	}
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		return filepath.Join(home, ".local", "state", "gip", "state.json")
+	}
+	return ""
+}
